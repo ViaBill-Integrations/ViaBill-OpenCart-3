@@ -25,7 +25,7 @@ $_['entry_test_mode']        = 'Modo de Pruebas';
 $_['entry_transaction_mode'] = 'Tipo de Transacción';
 $_['entry_transaction_mode_help'] = 'Elija si desea solo autorizar los pagos o autorizar y capturar inmediatamente.';
 $_['entry_pricetag']         = 'Script de PriceTag de ViaBill';
-$_['entry_pricetag_help']    = 'El script de ViaBill responsable de mostrar los PriceTags.';
+$_['entry_pricetag_help']    = 'Pegue el script PriceTag completo proporcionado por ViaBill. Puede incluir las etiquetas script de apertura y cierre.';
 $_['entry_authorize_order_status']     = 'Estado del Pedido (Tras Autorización)';
 $_['entry_capture_order_status']      = 'Estado del Pedido (Tras Captura)';
 $_['entry_status']           = 'Estado del Módulo';
@@ -34,6 +34,7 @@ $_['entry_sort_order']       = 'Orden de Aparición';
 $_['entry_geo_zone']         = 'Zona Geográfica';
 
 // Pricetags
+$_['tab_general'] = 'Ajustes generales';
 $_['tab_pricetag'] = 'Configuración PriceTag';
 $_['entry_pricetag_common']  = 'Opciones Comunes de PriceTag';
 $_['entry_pricetag_product']               = 'PriceTag en Página de Producto';
@@ -73,34 +74,11 @@ $_['entry_pricetag_cart_width'] = 'Ancho (Carrito)';
 $_['entry_pricetag_checkout_align'] = 'Alineación (Pago)';
 $_['entry_pricetag_checkout_width'] = 'Ancho (Pago)';
 
-// Authentication
-$_['text_viabill_setup'] = 'Configuración de Cuenta ViaBill';
-$_['text_viabill_account_required'] = 'Debes conectar tu cuenta de ViaBill antes de poder configurar el módulo de pago. Si no tienes una cuenta, puedes registrarte.';
-$_['tab_login'] = 'Iniciar Sesión';
-$_['tab_register'] = 'Registrarse';
-$_['entry_email'] = 'Correo Electrónico';
-$_['entry_password'] = 'Contraseña';
-$_['entry_name'] = 'Nombre del Negocio';
-$_['entry_url'] = 'URL del Sitio Web';
-$_['entry_country'] = 'País';
-$_['entry_tax_id'] = 'ID Fiscal (Número de IVA)';
-$_['help_tax_id'] = 'Opcional: El número de identificación fiscal de tu empresa.';
-$_['button_login'] = 'Iniciar Sesión';
-$_['button_register'] = 'Registrarse';
-$_['text_login_success'] = '¡Has iniciado sesión correctamente en tu cuenta de ViaBill!';
-$_['text_register_success'] = '¡Tu cuenta de ViaBill ha sido creada con éxito!';
-$_['text_select'] = '-- Por favor selecciona --';
-$_['error_email'] = '¡El correo electrónico es obligatorio!';
-$_['error_email_format'] = '¡Por favor introduce un correo electrónico válido!';
-$_['error_password'] = '¡La contraseña es obligatoria!';
-$_['error_name'] = '¡El nombre del negocio es obligatorio!';
-$_['error_url'] = '¡La URL del sitio web es obligatoria!';
-$_['error_country'] = '¡Por favor selecciona un país!';
-$_['error_login'] = 'Error al iniciar sesión. Por favor verifica tus credenciales e inténtalo de nuevo.';
-$_['error_registration'] = 'Error en el registro. Por favor revisa la información e inténtalo nuevamente.';
-$_['error_login_form'] = 'Por favor verifica tu información de inicio de sesión e inténtalo de nuevo.';
-$_['error_registration_form'] = 'Por favor verifica tu información de registro e inténtalo de nuevo.';
-$_['error_api_credentials'] = 'No se recibieron credenciales API de ViaBill. Por favor contacta con soporte.';
+// Credenciales de la cuenta (introducidas manualmente)
+$_['text_credentials'] = 'Credenciales de la cuenta ViaBill';
+$_['text_credentials_intro'] = 'Introduzca su clave API, secreto API y script PriceTag de ViaBill. Encontrará estos valores en su cuenta de comerciante de ViaBill. Los tres valores son necesarios para que la pasarela de pago y los PriceTags funcionen.';
+$_['text_credentials_missing'] = 'Faltan las credenciales de su cuenta ViaBill. Introduzca su clave API, secreto API y script PriceTag en la sección "Credenciales de la cuenta ViaBill" a continuación.';
+$_['help_secret_key_saved'] = 'Ya hay un secreto API guardado (oculto por seguridad). Deje este campo vacío para conservarlo.';
 
 // Buttons
 $_['button_save']            = 'Guardar';

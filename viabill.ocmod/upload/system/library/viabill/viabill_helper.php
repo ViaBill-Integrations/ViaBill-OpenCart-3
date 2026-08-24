@@ -42,33 +42,7 @@ class ViaBillHelper {
     }
   }
 
-  /**
-   * Sanitize and format the Tax ID (if given)
-   */
-  public static function sanitizeTaxID($tax_id, $country) {
-    $tax_id = str_replace(array(' ','-'), '', trim($tax_id));
-    if ($country == 'ES') {        
-      $regex_with_prefix = '/^ES[0-9A-Z]*/';
-      if (preg_match($regex_with_prefix, $tax_id)) {
-        return $tax_id;
-      }
-      $regex_without_prefix = '/^[0-9A-Z]+/';
-      if (preg_match($regex_without_prefix, $tax_id)) {
-        return 'ES'.$tax_id;
-      }
-    } else if ($country == 'DK') {
-      $regex_with_prefix = '/^DK[0-9]{8}$/';
-      if (preg_match($regex_with_prefix, $tax_id)) {
-        return $tax_id;
-      }
-      $regex_without_prefix = '/^[0-9]{8}$/';
-      if (preg_match($regex_without_prefix, $tax_id)) {
-        return 'DK'.$tax_id;
-      }
-    }
-    return '';
-  }
-  
+    
   /**
    * Get the ViaBill platform (affiliate) for this module.
    */

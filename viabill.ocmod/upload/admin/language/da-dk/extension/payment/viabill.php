@@ -25,7 +25,7 @@ $_['entry_test_mode']        = 'Testtilstand';
 $_['entry_transaction_mode'] = 'Transaktionstype';
 $_['entry_transaction_mode_help'] = 'Vælg om betalinger kun skal godkendes, eller også hæves med det samme.';
 $_['entry_pricetag']         = 'ViaBill PriceTag Script';
-$_['entry_pricetag_help']    = 'ViaBill PriceTag scriptet, som er ansvarligt for at vise pricetags.';
+$_['entry_pricetag_help']    = 'Indsæt hele PriceTag-scriptet fra ViaBill. Du må gerne inkludere de omsluttende script-tags.';
 $_['entry_authorize_order_status']     = 'Ordrestatus (efter godkendelse)';
 $_['entry_capture_order_status']     = 'Ordrestatus (efter hævning)';
 $_['entry_status']           = 'Modulstatus';
@@ -34,6 +34,7 @@ $_['entry_sort_order']       = 'Sortering';
 $_['entry_geo_zone']         = 'Geozone';
 
 // Pricetags
+$_['tab_general'] = 'Generelle indstillinger';
 $_['tab_pricetag'] = 'PriceTag Indstillinger';
 $_['entry_pricetag_common']  = 'Generalle PriceTag Indstillinger';
 $_['entry_pricetag_product']               = 'Produktvisning PriceTag';
@@ -73,34 +74,11 @@ $_['entry_pricetag_cart_width'] = 'Bredde (Kurv)';
 $_['entry_pricetag_checkout_align'] = 'Justering (Checkout)';
 $_['entry_pricetag_checkout_width'] = 'Bredde (Checkout)';
 
-// Authentication
-$_['text_viabill_setup'] = 'Opsætning af ViaBill-konto';
-$_['text_viabill_account_required'] = 'Du skal forbinde din ViaBill-konto, før du kan konfigurere betalingsmodulet. Hvis du ikke har en konto, kan du registrere en.';
-$_['tab_login'] = 'Log ind';
-$_['tab_register'] = 'Registrer';
-$_['entry_email'] = 'E-mail';
-$_['entry_password'] = 'Adgangskode';
-$_['entry_name'] = 'Firmanavn';
-$_['entry_url'] = 'Webadresse';
-$_['entry_country'] = 'Land';
-$_['entry_tax_id'] = 'CVR-nummer (Momsnummer)';
-$_['help_tax_id'] = 'Valgfrit: Din virksomheds momsregistreringsnummer.';
-$_['button_login'] = 'Log ind';
-$_['button_register'] = 'Registrer';
-$_['text_login_success'] = 'Du er nu logget ind med din ViaBill-konto!';
-$_['text_register_success'] = 'Din ViaBill-konto blev oprettet med succes!';
-$_['text_select'] = '-- Vælg venligst --';
-$_['error_email'] = 'E-mail påkrævet!';
-$_['error_email_format'] = 'Indtast venligst en gyldig e-mailadresse!';
-$_['error_password'] = 'Adgangskode påkrævet!';
-$_['error_name'] = 'Firmanavn påkrævet!';
-$_['error_url'] = 'Webadresse påkrævet!';
-$_['error_country'] = 'Vælg venligst land!';
-$_['error_login'] = 'Login mislykkedes. Kontroller dine oplysninger og prøv igen.';
-$_['error_registration'] = 'Registrering mislykkedes. Kontroller dine oplysninger og prøv igen.';
-$_['error_login_form'] = 'Kontroller dine loginoplysninger og prøv igen.';
-$_['error_registration_form'] = 'Kontroller dine registreringsoplysninger og prøv igen.';
-$_['error_api_credentials'] = 'API-oplysninger blev ikke modtaget fra ViaBill. Kontakt venligst support.';
+// Kontooplysninger (indtastes manuelt)
+$_['text_credentials'] = 'ViaBill kontooplysninger';
+$_['text_credentials_intro'] = 'Indtast din ViaBill API-nøgle, API-hemmelighed og PriceTag-script. Du finder disse værdier på din ViaBill-forhandlerkonto. Alle tre værdier er nødvendige, for at betalingsmodulet og PriceTags virker.';
+$_['text_credentials_missing'] = 'Dine ViaBill kontooplysninger mangler. Indtast venligst din API-nøgle, API-hemmelighed og PriceTag-script i sektionen "ViaBill kontooplysninger" nedenfor.';
+$_['help_secret_key_saved'] = 'En API-hemmelighed er allerede gemt (skjult af sikkerhedshensyn). Lad feltet være tomt for at beholde den.';
 
 // Buttons
 $_['button_save']            = 'Gem';

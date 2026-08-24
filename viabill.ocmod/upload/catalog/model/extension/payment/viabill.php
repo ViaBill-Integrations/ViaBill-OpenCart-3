@@ -12,6 +12,13 @@ class ModelExtensionPaymentViabill extends Model {
             return [];
         }
 
+        // The payment method is not available until the ViaBill account
+        // credentials (API key and secret) have been entered in the module
+        // settings.
+        if (!$this->config->get('payment_viabill_api_key') || !$this->config->get('payment_viabill_secret_key')) {
+            return [];
+        }
+
         // Check if cart has subscription products (if you don't support subscriptions)
         if (method_exists($this->cart, 'hasSubscription') && $this->cart->hasSubscription()) {
             return [];

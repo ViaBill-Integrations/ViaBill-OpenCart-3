@@ -25,7 +25,7 @@ $_['entry_test_mode']        = 'Test Mode';
 $_['entry_transaction_mode'] = 'Transaction Type';
 $_['entry_transaction_mode_help'] = 'Choose whether to authorize payments only, or authorize and capture immediately.';
 $_['entry_pricetag']         = 'ViaBill PriceTag Script';
-$_['entry_pricetag_help']    = 'The ViaBill PriceTag script responsible for rendering the pricetags.';
+$_['entry_pricetag_help']    = 'Paste the whole PriceTag script snippet provided by ViaBill. You may include the opening and closing script tags.';
 $_['entry_authorize_order_status']     = 'Order Status (After Payment Authorization)';
 $_['entry_capture_order_status']     = 'Order Status (After Payment Capture)';
 $_['entry_status']           = 'Module Status';
@@ -34,6 +34,7 @@ $_['entry_sort_order']       = 'Sort Order';
 $_['entry_geo_zone']         = 'Geo Zone';
 
 // Pricetags
+$_['tab_general'] = 'General Settings';
 $_['tab_pricetag'] = 'PriceTag Settings';
 $_['entry_pricetag_common']  = 'Common PriceTag Options';
 $_['entry_pricetag_product']               = 'Product Page PriceTag';
@@ -74,34 +75,11 @@ $_['entry_pricetag_checkout_align'] = 'Alignment (Checkout Page)';
 $_['entry_pricetag_checkout_width'] = 'Width (Checkout Page)';
 
 
-// Authentication
-$_['text_viabill_setup'] = 'ViaBill Account Setup';
-$_['text_viabill_account_required'] = 'You need to connect your ViaBill account before you can configure the payment module. If you don\'t have an account, you can register for one.';
-$_['tab_login'] = 'Login';
-$_['tab_register'] = 'Register';
-$_['entry_email'] = 'Email';
-$_['entry_password'] = 'Password';
-$_['entry_name'] = 'Business Name';
-$_['entry_url'] = 'Website URL';
-$_['entry_country'] = 'Country';
-$_['entry_tax_id'] = 'Tax ID (VAT Number)';
-$_['help_tax_id'] = 'Optional: Your business tax identification number.';
-$_['button_login'] = 'Login';
-$_['button_register'] = 'Register';
-$_['text_login_success'] = 'You have successfully logged in to your ViaBill account!';
-$_['text_register_success'] = 'Your ViaBill account has been successfully created!';
-$_['text_select'] = '-- Please Select --';
-$_['error_email'] = 'Email is required!';
-$_['error_email_format'] = 'Please enter a valid email address!';
-$_['error_password'] = 'Password is required!';
-$_['error_name'] = 'Business name is required!';
-$_['error_url'] = 'Website URL is required!';
-$_['error_country'] = 'Please select a country!';
-$_['error_login'] = 'Login failed. Please check your credentials and try again.';
-$_['error_registration'] = 'Registration failed. Please check your information and try again.';
-$_['error_login_form'] = 'Please check your login information and try again.';
-$_['error_registration_form'] = 'Please check your registration information and try again.';
-$_['error_api_credentials'] = 'API credentials not received from ViaBill. Please contact support.';
+// Account credentials (entered manually)
+$_['text_credentials'] = 'ViaBill Account Credentials';
+$_['text_credentials_intro'] = 'Enter your ViaBill API key, API secret and PriceTag script. You can find these values in your ViaBill merchant account. All three values are required for the payment gateway and the PriceTags to work.';
+$_['text_credentials_missing'] = 'Your ViaBill account credentials are missing. Please enter your API key, API secret and PriceTag script in the "ViaBill Account Credentials" section below.';
+$_['help_secret_key_saved'] = 'An API secret is already saved (hidden for security). Leave this field empty to keep it.';
 
 // Buttons
 $_['button_save']            = 'Save';

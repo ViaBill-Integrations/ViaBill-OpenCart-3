@@ -11,11 +11,9 @@ class ControllerExtensionPaymentViabill extends Controller {
         
         // Or manually assign specific ones you need
         $language_keys = [
-            'heading_title', 'text_viabill_setup', 'text_viabill_account_required',
-            'tab_login', 'tab_register', 'entry_email', 'entry_password',
-            'entry_name', 'entry_url', 'entry_country', 'entry_tax_id',
-            'help_tax_id', 'button_login', 'button_register', 'button_cancel',
-            'text_select'
+            'heading_title', 'button_cancel',
+            'text_credentials', 'text_credentials_intro', 'text_credentials_missing',
+            'help_secret_key_saved',
         ];
         
         foreach ($language_keys as $key) {
@@ -36,7 +34,25 @@ class ControllerExtensionPaymentViabill extends Controller {
         // If this is a POST request and the user has permission, save the settings
         if ($this->request->server['REQUEST_METHOD'] == 'POST' && $this->user->hasPermission('modify', 'extension/payment/viabill')) {
             // Save settings via model
-            $this->model_extension_payment_viabill->saveSettings($this->request->post);
+            $post_data = $this->request->post;
+
+            // The API secret field is rendered as an empty password input so
+            // the secret is never printed back to the page. An empty submitted
+            // value therefore means "keep the currently stored secret".
+            if (empty($post_data['payment_viabill_secret_key'])) {
+                $post_data['payment_viabill_secret_key'] = $this->config->get('payment_viabill_secret_key') ?? '';
+            }
+
+            // Normalize the manually entered credentials.
+            if (isset($post_data['payment_viabill_api_key'])) {
+                $post_data['payment_viabill_api_key'] = trim((string) $post_data['payment_viabill_api_key']);
+            }
+            $post_data['payment_viabill_secret_key'] = trim((string) $post_data['payment_viabill_secret_key']);
+            if (isset($post_data['payment_viabill_pricetag'])) {
+                $post_data['payment_viabill_pricetag'] = trim((string) $post_data['payment_viabill_pricetag']);
+            }
+
+            $this->model_extension_payment_viabill->saveSettings($post_data);
             
             // Set a success message and redirect back to extension list
             $this->session->data['success'] = $this->language->get('text_success');
@@ -102,16 +118,20 @@ class ControllerExtensionPaymentViabill extends Controller {
         $data['payment_viabill_pricetag_cart_label']     = $this->config->get('payment_viabill_pricetag_cart_label')     ?? '';
         $data['payment_viabill_pricetag_checkout_label'] = $this->config->get('payment_viabill_pricetag_checkout_label') ?? '';
 
-        // Check if API key is set
+        // Check if the account credentials have been entered
         $api_key_exists = !empty($data['payment_viabill_api_key']);
         $data['api_key_exists'] = $api_key_exists;
-        
-        // URLs for login and registration actions
-        $data['login_action'] = $this->url->link('extension/payment/viabill/login', 
-                                'user_token=' . $this->session->data['user_token']);
-        $data['register_action'] = $this->url->link('extension/payment/viabill/register', 
-                                    'user_token=' . $this->session->data['user_token']);                
-        
+
+        $secret_key_exists = !empty($data['payment_viabill_secret_key']);
+        $data['secret_key_exists'] = $secret_key_exists;
+
+        $data['credentials_missing'] = !$api_key_exists || !$secret_key_exists || empty($data['payment_viabill_pricetag']);
+
+        // The API secret is never printed back to the page; the template
+        // renders a masked password field that can be left empty to keep
+        // the currently stored value.
+        unset($data['payment_viabill_secret_key']);
+
         // Load geo zones for the dropdown
         $this->load->model('localisation/geo_zone');
         $data['geo_zones'] = $this->model_localisation_geo_zone->getGeoZones();
@@ -155,7 +175,7 @@ class ControllerExtensionPaymentViabill extends Controller {
         $data['payment_viabill_pricetag_checkout_align']                       = $this->config->get('payment_viabill_pricetag_checkout_align') ?? 'default';
         $data['payment_viabill_pricetag_checkout_width']                       = $this->config->get('payment_viabill_pricetag_checkout_width') ?? '';
 
-        // Add any error or success messages from login/register attempts
+        // Add any error or success messages from previous actions
         if (isset($this->session->data['viabill_error'])) {
             $data['error_warning'] = $this->session->data['viabill_error'];
             unset($this->session->data['viabill_error']);
@@ -174,22 +194,11 @@ class ControllerExtensionPaymentViabill extends Controller {
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer'] = $this->load->controller('common/footer');
         
-        // Render the appropriate template based on whether API key exists
-        if ($api_key_exists) {
-            // API key exists, show configuration form
-            $this->response->setOutput($this->load->view('extension/payment/viabill', $data));
-        } else {
-            // No API key, show login/register form
-            $data['store_name'] = $store_info['config_name'] ?? '';
-            $data['store_url'] = $store_info['config_url'] ?? '';
-            $data['store_email'] = $store_info['config_email'] ?? '';
-            
-            // Load list of countries for registration form
-            $this->load->model('localisation/country');
-            $data['countries'] = $this->model_localisation_country->getCountries();
-
-            $this->response->setOutput($this->load->view('extension/payment/viabill_auth', $data));
-        }        
+        // Always show the configuration form. The merchant obtains the API
+        // key, API secret and PriceTag script elsewhere (e.g. from the
+        // ViaBill merchant portal) and enters them manually in the "ViaBill
+        // Account Credentials" section at the top of the form.
+        $this->response->setOutput($this->load->view('extension/payment/viabill', $data));
     }
 
     // Get MyViaBill
@@ -270,176 +279,6 @@ class ControllerExtensionPaymentViabill extends Controller {
         }
 
         return $messages;
-    }
-
-    // Handle ViaBill login
-    public function login(): void {
-        $this->load->language('extension/payment/viabill');
-        
-        $json = [];
-        
-        if ($this->request->server['REQUEST_METHOD'] == 'POST' && $this->validateLogin()) {
-            
-            $this->loadViabillHelpers();
-            
-            // Get login endpoint
-            $login_endpoint = ViaBillServices::getApiEndPoint('login');
-            
-            // Prepare login data
-            $login_data = [
-                'email' => $this->request->post['email'],
-                'password' => $this->request->post['password']
-            ];
-            
-            // Send login request to ViaBill API                        
-            $response = ViaBillHelper::sendApiRequest($login_endpoint['endpoint'], $login_data, $login_endpoint['method']);
-            
-            if (isset($response['status']) && $response['status'] === 'success') {
-                // Extract API credentials from response
-                $api_data = json_decode($response['body'], true);
-                                
-                if (isset($api_data['key']) && isset($api_data['secret'])) {
-                    // Save API credentials
-                    $settings = [
-                        'payment_viabill_api_key' => $api_data['key'],
-                        'payment_viabill_secret_key' => $api_data['secret']
-                    ];
-                    
-                    // Save pricetag script if provided
-                    if (isset($api_data['pricetagScript'])) {
-                        $settings['payment_viabill_pricetag'] = $api_data['pricetagScript'];
-                    }
-                    
-                    $this->load->model('extension/payment/viabill');
-                    $this->model_extension_payment_viabill->saveSettings($settings);
-                    
-                    $this->session->data['viabill_success'] = $this->language->get('text_login_success');
-                    $json['success'] = true;
-                    $json['redirect'] = $this->url->link('extension/payment/viabill', 'user_token=' . $this->session->data['user_token']);
-                } else {
-                    $json['error'] = $this->language->get('error_api_credentials');
-                }
-            } else {
-                $error_message = isset($response['body']) ? json_decode($response['body'], true) : [];
-                $json['error'] = isset($error_message['message']) ? $error_message['message'] : $this->language->get('error_login');
-            }
-        } else {
-            $json['error'] = $this->language->get('error_login_form');
-        }
-        
-        $this->response->addHeader('Content-Type: application/json');
-        $this->response->setOutput(json_encode($json));
-    }
-
-    // Handle ViaBill registration
-    public function register(): void {
-        $this->load->language('extension/payment/viabill');
-        
-        $json = [];
-        
-        if ($this->request->server['REQUEST_METHOD'] == 'POST' && $this->validateRegistration()) {
-            
-            $this->loadViabillHelpers();
-            
-            // Get registration endpoint
-            $register_endpoint = ViaBillServices::getApiEndPoint('registration');
-            
-            // Prepare registration data
-            $register_data = [
-                'email' => $this->request->post['email'],
-                'name' => $this->request->post['name'],
-                'url' => $this->request->post['url'],
-                'country' => $this->request->post['country'],                
-                'affiliate' => ViaBillConstants::AFFILIATE
-            ];            
-            
-            // Add optional fields if provided
-            if (!empty($this->request->post['tax_id'])) {
-                $register_data['taxId'] = ViaBillHelper::sanitizeTaxID(trim($this->request->post['tax_id']), $register_data['country']);
-            }
-            
-            // Send registration request to ViaBill API            
-            $response = ViaBillHelper::sendApiRequest($register_endpoint['endpoint'], $register_data, $register_endpoint['method']);
-            
-            if (isset($response['status']) && $response['status'] === 'success') {
-                // Extract API credentials from response
-                $api_data = json_decode($response['body'], true);
-                
-                if (isset($api_data['key']) && isset($api_data['secret'])) {
-                    // Save API credentials
-                    $settings = [
-                        'payment_viabill_api_key' => $api_data['key'],
-                        'payment_viabill_secret_key' => $api_data['secret']
-                    ];
-                    
-                    // Save pricetag script if provided
-                    if (isset($api_data['pricetagScript'])) {
-                        $settings['payment_viabill_pricetag'] = $api_data['pricetagScript'];
-                    }
-                    
-                    $this->load->model('extension/payment/viabill');
-                    $this->model_extension_payment_viabill->saveSettings($settings);
-                    
-                    $this->session->data['viabill_success'] = $this->language->get('text_login_success');
-                    $json['success'] = true;
-                    $json['redirect'] = $this->url->link('extension/payment/viabill', 'user_token=' . $this->session->data['user_token']);
-                } else {
-                    $json['error'] = $this->language->get('error_api_credentials');
-                    $json['error'] .= '[R]'.print_r($response, true);
-                }
-            } else {
-                $error_message = isset($response['body']) ? json_decode($response['body'], true) : [];
-                $json['error'] = isset($error_message['message']) ? $error_message['message'] : $this->language->get('error_registration');                
-            }
-        } else {
-            $error_message = (empty($this->error))?$this->language->get('error_registration_form'):implode(',',$this->error);
-            $json['error'] = $error_message;            
-        }
-        
-        $this->response->addHeader('Content-Type: application/json');
-        $this->response->setOutput(json_encode($json));
-    }
-
-    // Validate login form
-    private function validateLogin(): bool {
-        if (empty($this->request->post['email'])) {
-            $this->error['email'] = $this->language->get('error_email');
-        } elseif (!filter_var($this->request->post['email'], FILTER_VALIDATE_EMAIL)) {
-            $this->error['email'] = $this->language->get('error_email_format');
-        }
-        
-        if (empty($this->request->post['password'])) {
-            $this->error['password'] = $this->language->get('error_password');
-        }
-        
-        return !$this->error;
-    }
-
-    // Validate registration form
-    private function validateRegistration(): bool {
-        if (empty($this->request->post['email'])) {
-            $this->error['email'] = $this->language->get('error_email');
-        } elseif (!filter_var($this->request->post['email'], FILTER_VALIDATE_EMAIL)) {
-            $this->error['email'] = $this->language->get('error_email_format');
-        }
-        
-        if (empty($this->request->post['name'])) {
-            $this->error['name'] = $this->language->get('error_name');
-        }
-        
-        if (empty($this->request->post['url'])) {
-            $this->error['url'] = $this->language->get('error_url');
-        }
-        
-        if (empty($this->request->post['country'])) {
-            $this->error['country'] = $this->language->get('error_country');
-        }
-
-        if (!empty($this->request->post['tax_id'])) {
-            // add missing code here
-        }
-        
-        return !$this->error;
     }
 
     /**
