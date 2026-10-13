@@ -89,3 +89,18 @@ $_['button_cancel']          = 'Cancel';
 $_['error_permission']       = 'Warning: You do not have permission to modify ViaBill Payments!';
 $_['error_api_key']          = 'API Key is required!';
 $_['error_secret_key']       = 'Secret Key is required!';
+
+// Signup note, payment action messages and order history comments
+$_['text_signup_title'] = 'No ViaBill account credentials yet?';
+$_['text_signup_text'] = 'Fill in the ViaBill online signup form to get your API key, API secret and PriceTag script.';
+$_['text_signup_link'] = 'Go to the ViaBill signup form';
+$_['error_amount'] = 'Please enter a valid amount greater than 0.';
+$_['error_no_transaction'] = 'No ViaBill transaction was found for this order.';
+$_['error_capture_amount_range'] = 'The capture amount must be greater than 0 and at most %s.';
+$_['error_refund_amount_range'] = 'The refund amount must be greater than 0 and at most %s.';
+$_['error_void_captured'] = 'The payment has already been (partly) captured and can no longer be voided. Use a refund instead.';
+$_['error_api_http'] = 'ViaBill answered with HTTP %d.';
+$_['error_api_unreachable'] = 'ViaBill could not be reached.';
+$_['text_history_captured'] = 'ViaBill payment captured: %s %s';
+$_['text_history_refunded'] = 'ViaBill payment refunded: %s %s';
+$_['text_history_voided'] = 'ViaBill authorization voided';

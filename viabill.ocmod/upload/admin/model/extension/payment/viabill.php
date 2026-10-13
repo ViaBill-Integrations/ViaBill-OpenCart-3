@@ -70,26 +70,13 @@ class ModelExtensionPaymentViabill extends Model {
         $user_group_id = $this->user->getGroupId();
         
         // Grant access and modify permission for this module’s route
+        // (OpenCart 3 checks permissions per controller route, so this covers
+        // all of the module's admin actions, e.g. order/capture/refund/void.)
         $this->model_user_user_group->addPermission($user_group_id, 'access', 'extension/payment/viabill');
         $this->model_user_user_group->addPermission($user_group_id, 'modify', 'extension/payment/viabill');
-        $this->model_user_user_group->addPermission($user_group_id, 'access', 'extension/payment/viabill/auth');
-        $this->model_user_user_group->addPermission($user_group_id, 'modify', 'extension/payment/viabill/auth');
-        $this->model_user_user_group->addPermission($user_group_id, 'access', 'extension/payment/viabill/order');
-        $this->model_user_user_group->addPermission($user_group_id, 'modify', 'extension/payment/viabill/order');
-        $this->model_user_user_group->addPermission($user_group_id, 'access', 'extension/payment/viabill/login');
-        $this->model_user_user_group->addPermission($user_group_id, 'modify', 'extension/payment/viabill/login');
-        $this->model_user_user_group->addPermission($user_group_id, 'access', 'extension/payment/viabill/register');
-        $this->model_user_user_group->addPermission($user_group_id, 'modify', 'extension/payment/viabill/register');
-        $this->model_user_user_group->addPermission($user_group_id, 'access', 'extension/payment/viabill/injectProductPriceTag');
-        $this->model_user_user_group->addPermission($user_group_id, 'modify', 'extension/payment/viabill/injectProductPriceTag');
-        $this->model_user_user_group->addPermission($user_group_id, 'access', 'extension/payment/viabill/injectCartPriceTag');
-        $this->model_user_user_group->addPermission($user_group_id, 'modify', 'extension/payment/viabill/injectCartPriceTag');
-        $this->model_user_user_group->addPermission($user_group_id, 'access', 'extension/payment/viabill/injectCheckoutPriceTag');
-        $this->model_user_user_group->addPermission($user_group_id, 'modify', 'extension/payment/viabill/injectCheckoutPriceTag');
-        
-        // Grant access & modify on the core order-info route
-        $this->model_user_user_group->addPermission($user_group_id, 'access', 'sale/order');
-        $this->model_user_user_group->addPermission($user_group_id, 'modify', 'sale/order');                                
+
+        // No permissions on core routes (e.g. sale/order) are granted here:
+        // access to orders stays as configured by the shop owner.
     }
     
     // Clean up on uninstallation
@@ -98,6 +85,7 @@ class ModelExtensionPaymentViabill extends Model {
         // Remove the PriceTag injection event
         $this->model_setting_event->deleteEventByCode('viabill_product_pricetag');
         $this->model_setting_event->deleteEventByCode('viabill_cart_pricetag');
+        $this->model_setting_event->deleteEventByCode('viabill_checkout_pricetag');
 
         // (Optional) Drop the transaction log table
         // $this->db->query("DROP TABLE IF EXISTS `" . DB_PREFIX . "viabill_transaction`;");
@@ -121,6 +109,12 @@ class ModelExtensionPaymentViabill extends Model {
             $this->model_user_user_group->removePermission($user_group_id, 'modify', 'extension/payment/viabill/login');
             $this->model_user_user_group->removePermission($user_group_id, 'access', 'extension/payment/viabill/register');
             $this->model_user_user_group->removePermission($user_group_id, 'modify', 'extension/payment/viabill/register');
+
+            // Entries added by earlier versions of the module
+            foreach (['injectProductPriceTag', 'injectCartPriceTag', 'injectCheckoutPriceTag'] as $method) {
+                $this->model_user_user_group->removePermission($user_group_id, 'access', 'extension/payment/viabill/' . $method);
+                $this->model_user_user_group->removePermission($user_group_id, 'modify', 'extension/payment/viabill/' . $method);
+            }
         }
     }
 
@@ -149,10 +143,11 @@ class ModelExtensionPaymentViabill extends Model {
                 return [
                     'order_id' => $order_id,
                     'total' => $order_info['total'],
+                    'amount' => $order_info['total'],
                     'currency' => $order_info['currency_code'],
-                    'transaction_id' => $order_info['transaction_id'],
-                    'captured_amount' => $order_info['captured_amount'],
-                    'refunded_amount' => $order_info['refunded_amount']
+                    'transaction_id' => '',
+                    'captured_amount' => 0,
+                    'refunded_amount' => 0
                 ];
             }
             
@@ -164,145 +159,146 @@ class ModelExtensionPaymentViabill extends Model {
     /**
      * Capture a previously authorized ViaBill transaction.
      * @param int $order_id The OpenCart order ID to capture.
-     * @param float|null $amount Amount to capture (null for full order amount).
-     * @return bool success
+     * @param float|null $amount Amount to capture (null for the remaining amount).
+     * @return array ['success' => bool, 'message' => string]
      */
     public function capturePayment(int $order_id, ?float $amount = null): array {
-        // Load language class
-        $this->load->language('extension/payment/viabill');
-        
-        // Load order and transaction info from OpenCart
-        $this->load->model('sale/order');
-
-        // Load helper classes
-        $this->loadViabillHelpers();        
-    
-        $registry = $this->registry;
-        ViaBillServices::setRegistry($registry);
-
-        $order_info = $this->model_sale_order->getOrder($order_id);
-        if (!$order_info) return false;
-        // Determine amount to capture
-        $captureAmount = $amount ?? $order_info['total'];
-        
-        // Retrieve ViaBill transaction ID (stored during authorization)
-        $viaTransactionId = $this->getViaBillTransactionId($order_id);  // A helper method to fetch from our log table or order history
-        if (!$viaTransactionId) return false;
-        
-        // Prepare ViaBill capture API request (assuming ViaBill provides an endpoint for capture)
-        $apiKey = $this->config->get('payment_viabill_api_key');
-        $secret = $this->config->get('payment_viabill_secret_key');
-        
-        $capture_data = [
-            'apikey'      => $apiKey,
-            'secret'      => $secret,
-            'transaction' => $viaTransactionId,
-            'amount'      => number_format($captureAmount, 2, '.', ''), // formatted amount
-            'currency'    => $order_info['currency_code']
-        ];
-        
-        // Endpoint for capture
-        $capture_endpoint = ViaBillServices::getApiEndPoint('capture_transaction');        
-        $response = ViaBillHelper::sendApiRequest($capture_endpoint['endpoint'], $capture_data, $capture_endpoint['method']);
-        if ($response['status'] == 'success') {
-            $capturedStatusId = $this->config->get('payment_viabill_capture_order_status_id') ?: $this->config->get('config_order_status_id');
-            $this->addOrderHistory($order_id, $capturedStatusId, 'ViaBill payment captured', true);
-            return ['success' => true];
-        } else {
-            // Log or handle capture failure
-            return ['success' => false];
+        $transaction = $this->getTransactionForOperation($order_id);
+        if (!$transaction) {
+            return $this->operationFailed($this->language->get('error_no_transaction'));
         }
+
+        // Never capture more than what is still authorized.
+        $remaining = round((float)$transaction['amount'] - (float)$transaction['captured_amount'], 2);
+        $captureAmount = round($amount ?? $remaining, 2);
+
+        if ($captureAmount <= 0 || $captureAmount > $remaining) {
+            return $this->operationFailed(sprintf($this->language->get('error_capture_amount_range'), number_format($remaining, 2, '.', '')));
+        }
+
+        $response = ViaBillServices::request('capture_transaction', [
+            'id'       => $transaction['transaction_id'],
+            'apikey'   => (string)$this->config->get('payment_viabill_api_key'),
+            'secret'   => (string)$this->config->get('payment_viabill_secret_key'), // used for the signature only
+            // ViaBill expects capture amounts as negative values (also in the signature).
+            'amount'   => number_format(-$captureAmount, 2, '.', ''),
+            'currency' => $transaction['currency'],
+        ]);
+
+        if (!ViaBillHelper::isSuccessfulResponse($response)) {
+            return $this->apiFailed('Capture', $order_id, $response);
+        }
+
+        $capturedStatusId = (int)($this->config->get('payment_viabill_capture_order_status_id') ?: $this->config->get('config_order_status_id'));
+        $this->addOrderHistory($order_id, $capturedStatusId, sprintf($this->language->get('text_history_captured'), number_format($captureAmount, 2, '.', ''), $transaction['currency']), true);
+
+        return ['success' => true, 'message' => '', 'amount' => $captureAmount];
     }
-    
+
     /**
      * Refund a captured ViaBill transaction (partial or full).
      * @param int $order_id
-     * @param float|null $amount Amount to refund (null for full refund).
-     * @return bool success
+     * @param float|null $amount Amount to refund (null for the remaining captured amount).
+     * @return array ['success' => bool, 'message' => string]
      */
     public function refundPayment(int $order_id, ?float $amount = null): array {
-        // Load language class
-        $this->load->language('extension/payment/viabill');
-        
-        // Load order and transaction info from OpenCart
-        $this->load->model('sale/order');
-
-        // Load helper classes
-        $this->loadViabillHelpers();
-        
-        $registry = $this->registry;
-        ViaBillServices::setRegistry($registry);
-
-        $order_info = $this->model_sale_order->getOrder($order_id);
-        if (!$order_info) return false;
-        $refundAmount = $amount ?? $order_info['total'];
-        $viaTransactionId = $this->getViaBillTransactionId($order_id);
-        if (!$viaTransactionId) return false;
-        
-        // Prepare ViaBill refund API request (placeholder endpoint)
-        $apiKey = $this->config->get('payment_viabill_api_key');
-        $secret = $this->config->get('payment_viabill_secret_key');
-        
-        $refund_data = [
-            'apikey'      => $apiKey,
-            'secret'      => $secret,
-            'transaction' => $viaTransactionId,
-            'amount'      => number_format($refundAmount, 2, '.', ''),
-            'currency'    => $order_info['currency_code']
-        ];
-
-        // Endpoint for refund
-        $refund_endpoint = ViaBillServices::getApiEndPoint('refund_transaction');
-        $response = ViaBillHelper::sendApiRequest($refund_endpoint['endpoint'], $refund_data, $refund_endpoint['method']);
-        if ($response['status'] == 'success') {            
-            // Typically, you’d have a specific "Refunded" status ID configured or use OpenCart's "Refunded" if exists            
-            $refundedStatusId = $this->getOrderStatusIdByName('Refunded') ?? $this->config->get('config_order_status_id');
-            $this->addOrderHistory($order_id, $refundedStatusId, 'ViaBill payment refunded', true);       
-            return ['success' => true];
+        $transaction = $this->getTransactionForOperation($order_id);
+        if (!$transaction) {
+            return $this->operationFailed($this->language->get('error_no_transaction'));
         }
-        return ['success' => false];
+
+        // Never refund more than what has been captured and not yet refunded.
+        $remaining = round((float)$transaction['captured_amount'] - (float)$transaction['refunded_amount'], 2);
+        $refundAmount = round($amount ?? $remaining, 2);
+
+        if ($refundAmount <= 0 || $refundAmount > $remaining) {
+            return $this->operationFailed(sprintf($this->language->get('error_refund_amount_range'), number_format($remaining, 2, '.', '')));
+        }
+
+        $response = ViaBillServices::request('refund_transaction', [
+            'id'       => $transaction['transaction_id'],
+            'apikey'   => (string)$this->config->get('payment_viabill_api_key'),
+            'secret'   => (string)$this->config->get('payment_viabill_secret_key'), // used for the signature only
+            'amount'   => number_format($refundAmount, 2, '.', ''),
+            'currency' => $transaction['currency'],
+        ]);
+
+        if (!ViaBillHelper::isSuccessfulResponse($response)) {
+            return $this->apiFailed('Refund', $order_id, $response);
+        }
+
+        // Typically, you’d have a specific "Refunded" status ID configured or use OpenCart's "Refunded" if exists
+        $refundedStatusId = (int)($this->getOrderStatusIdByName('Refunded') ?? $this->config->get('config_order_status_id'));
+        $this->addOrderHistory($order_id, $refundedStatusId, sprintf($this->language->get('text_history_refunded'), number_format($refundAmount, 2, '.', ''), $transaction['currency']), true);
+
+        return ['success' => true, 'message' => '', 'amount' => $refundAmount];
     }
-    
+
     /**
      * Void a previously authorized ViaBill transaction (cancel before capture).
      * @param int $order_id
-     * @return bool success
+     * @return array ['success' => bool, 'message' => string]
      */
     public function voidPayment(int $order_id): array {
-        // Load language class
-        $this->load->language('extension/payment/viabill');
-                
-        // Load order and transaction info from OpenCart
-        $this->load->model('sale/order');
+        $transaction = $this->getTransactionForOperation($order_id);
+        if (!$transaction) {
+            return $this->operationFailed($this->language->get('error_no_transaction'));
+        }
 
-        // Load helper classes
+        if ((float)$transaction['captured_amount'] > 0) {
+            return $this->operationFailed($this->language->get('error_void_captured'));
+        }
+
+        $response = ViaBillServices::request('cancel_transaction', [
+            'id'     => $transaction['transaction_id'],
+            'apikey' => (string)$this->config->get('payment_viabill_api_key'),
+            'secret' => (string)$this->config->get('payment_viabill_secret_key'), // used for the signature only
+        ]);
+
+        if (!ViaBillHelper::isSuccessfulResponse($response)) {
+            return $this->apiFailed('Void', $order_id, $response);
+        }
+
+        $this->db->query("UPDATE `" . DB_PREFIX . "viabill_transaction` SET `status` = '" . $this->db->escape(ViaBillConstants::TX_STATUS_VOIDED) . "', `date_modified` = NOW() WHERE `order_id` = '" . (int)$order_id . "' AND `transaction_id` = '" . $this->db->escape($transaction['transaction_id']) . "'");
+
+        // Typically, you’d have a specific "Cancelled" status ID configured or use OpenCart's "Cancelled" if exists
+        $cancelStatusId = (int)($this->getOrderStatusIdByName('Voided') ?? $this->config->get('config_order_status_id'));
+        $this->addOrderHistory($order_id, $cancelStatusId, $this->language->get('text_history_voided'), false);
+
+        return ['success' => true, 'message' => ''];
+    }
+
+    /**
+     * Load the helpers needed for API operations and return the order's
+     * ViaBill transaction (empty array if there is none).
+     */
+    private function getTransactionForOperation(int $order_id): array {
+        $this->load->language('extension/payment/viabill');
+
         $this->loadViabillHelpers();
 
-        $registry = $this->registry;
-        ViaBillServices::setRegistry($registry);
+        ViaBillServices::setRegistry($this->registry);
 
-        $viaTransactionId = $this->getViaBillTransactionId($order_id);
-        if (!$viaTransactionId) return false;
-        // Prepare ViaBill void API request (placeholder endpoint)
-        $apiKey = $this->config->get('payment_viabill_api_key');
-        $secret = $this->config->get('payment_viabill_secret_key');
-        
-        $void_data = [
-            'apikey'      => $apiKey,
-            'secret'      => $secret,
-            'transaction' => $viaTransactionId
-        ];
+        $query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "viabill_transaction` WHERE `order_id` = '" . (int)$order_id . "' ORDER BY `id` DESC LIMIT 1");
 
-        // Endpoint for void
-        $void_endpoint = ViaBillServices::getApiEndPoint('cancel_transaction');
-        $response = ViaBillHelper::sendApiRequest($void_endpoint['endpoint'], $void_data, $void_endpoint['method']);        
-        if ($response['status'] == 'success') {
-            // Typically, you’d have a specific "Cancelled" status ID configured or use OpenCart's "Cancelled" if exists            
-            $cancelStatusId = $this->getOrderStatusIdByName('Voided') ?? $this->config->get('config_order_status_id');
-            $this->addOrderHistory($order_id, $cancelStatusId, 'ViaBill authorization voided', false);            
-            return ['success' => true];
-        }
-        return ['success' => false];
+        return $query->num_rows ? $query->row : [];
+    }
+
+    private function operationFailed(string $message): array {
+        return ['success' => false, 'message' => $message];
+    }
+
+    /**
+     * Log a failed API operation and return a failure result. The response
+     * body is logged, but never the request (it would contain the signature).
+     */
+    private function apiFailed(string $operation, int $order_id, array $response): array {
+        $httpCode = isset($response['http_code']) ? (int)$response['http_code'] : 0;
+        $details = isset($response['message']) ? $response['message'] : (isset($response['body']) ? $response['body'] : '');
+
+        ViaBillHelper::log($operation . ' failed for order #' . $order_id . ' [HTTP ' . $httpCode . ']: ' . $details, 'error');
+
+        return $this->operationFailed($httpCode ? sprintf($this->language->get('error_api_http'), $httpCode) : $this->language->get('error_api_unreachable'));
     }
 
     /**

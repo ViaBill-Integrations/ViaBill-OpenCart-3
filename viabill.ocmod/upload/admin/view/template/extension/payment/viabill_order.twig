@@ -3,11 +3,17 @@
     <i class="fa-solid fa-money-check"></i> ViaBill Transaction Management
   </div>
   <div class="card-body">
+    {% if error %}
+      <div class="alert alert-danger">{{ error|e }}</div>
+    {% endif %}
+    {% if success %}
+      <div class="alert alert-success">{{ success|e }}</div>
+    {% endif %}
     <!-- Transaction Details Table -->
     <table class="table table-bordered">
       <tr>
         <th>Transaction ID</th>
-        <td>{{ via_transaction }}</td>
+        <td>{{ transaction_id }}</td>
       </tr>
       <tr>
         <th>Order Total</th>

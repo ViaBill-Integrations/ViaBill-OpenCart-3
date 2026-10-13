@@ -23,8 +23,8 @@ class ViaBillHelper {
   /**
    * Get the TBYB value in the proper format.
    */
-  public static function getFormattedTbyb() {
-    return self::formatTbyb($this->getTbyb());
+  public static function getFormattedTbyb($tbyb = null) {
+    return self::formatTbyb($tbyb);
   }
 
   /**
@@ -48,26 +48,6 @@ class ViaBillHelper {
    */
   public static function getViaBillApiPlatform() {
     return ViaBillConstants::AFFILIATE;
-  }
-
-  /**
-     * Verify callback signature from ViaBill
-     * 
-     * @param array $data
-     * @return bool
-     */
-    public function verifyCallbackSignature(array $data): bool {
-      if (!isset($data['signature']) || !isset($data['transaction']) || !isset($data['amount']) || !isset($data['currency'])) {
-          return false;
-      }
-      
-      $api_key = $this->config->get('payment_viabill_api_key');
-      $secret = $this->config->get('payment_viabill_secret');
-      
-      $signature_data = $api_key . $data['transaction'] . $data['amount'] . $data['currency'] . $secret;
-      $calculated_signature = md5($signature_data);
-      
-      return $calculated_signature === $data['signature'];
   }
 
   /**
@@ -123,6 +103,16 @@ class ViaBillHelper {
       // Return the transfer as a string instead of outputting it directly
       curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
+      // Never wait indefinitely for the ViaBill API (it is called during
+      // checkout), always verify its TLS certificate and only speak HTTPS.
+      curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, ViaBillConstants::API_CONNECT_TIMEOUT);
+      curl_setopt($ch, CURLOPT_TIMEOUT, ViaBillConstants::API_TIMEOUT);
+      curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+      curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+      if (defined('CURLOPT_PROTOCOLS') && defined('CURLPROTO_HTTPS')) {
+          curl_setopt($ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTPS);
+      }
+
       // Set headers for JSON if data is an array
       if (is_array($data)) {
           curl_setopt($ch, CURLOPT_HTTPHEADER, [            
@@ -161,7 +151,7 @@ class ViaBillHelper {
       curl_close($ch);
 
       // If not auto_redirecting, check for redirect in headers
-      if (!$auto_redirect && preg_match('/Location:\s*(.*)/i', $headers, $matches)) {
+      if (!$auto_redirect && preg_match('/^Location:\s*(\S+)\s*$/mi', $headers, $matches)) {
           return [
               'status' => 'redirect',
               'redirect_url' => trim($matches[1]),
@@ -188,24 +178,35 @@ class ViaBillHelper {
    */
   public static function log($message, $level = 'info', $use_custom_log = true) {
     // Format the message with timestamp and level
-    $formatted_message = '[' . strtoupper($level) . '] ' . $message;    
-    
-    if ($use_custom_log) {
-        // Use a custom log file for ViaBill-specific logs
-        $log = new \Opencart\System\Library\Log('viabill.log');
-        $log->write($formatted_message);
-    } else {
-        // Use OpenCart's default error logging system
-        if ($level == 'error') {
-            // For errors, use the system logger
-            $this->log->write($formatted_message);
-        } else {
-            // For info and other levels, only log if in debug mode
-            if ($this->config->get('payment_viabill_debug')) {
-                $this->log->write($formatted_message);
-            }
-        }
+    $formatted_message = '[' . strtoupper($level) . '] ' . $message;
+
+    // Static context: use OpenCart 3's Log library directly, either the
+    // ViaBill log file or OpenCart's default error log.
+    $log = new \Log($use_custom_log ? 'viabill.log' : 'error.log');
+    $log->write($formatted_message);
+  }
+
+  /**
+   * Check whether a sendApiRequest() result is an actual success, i.e. the
+   * ViaBill API answered with a 2xx status code (or, when $allow_redirect is
+   * set, with a redirect). Transport errors and 4xx/5xx answers are failures.
+   *
+   * @param mixed $response The array returned by sendApiRequest()
+   * @param bool $allow_redirect Whether a 3xx redirect counts as success
+   * @return bool
+   */
+  public static function isSuccessfulResponse($response, $allow_redirect = false) {
+    if (!is_array($response) || empty($response['status']) || empty($response['http_code'])) {
+      return false;
     }
+
+    $http_code = (int)$response['http_code'];
+
+    if ($response['status'] === 'redirect') {
+      return $allow_redirect && $http_code >= 300 && $http_code < 400;
+    }
+
+    return $response['status'] === 'success' && $http_code >= 200 && $http_code < 300;
   }
 
 

@@ -5,7 +5,33 @@
  */
 class ViaBillConstants {
   
-  public const PROTOCOL = '3.0';
+  // ViaBill API protocol: 3.1 uses SHA-256 checksums and signatures
+  // (protocol 3.0 used MD5).
+  public const PROTOCOL = '3.1';
+
+  // Setting (outside the payment_viabill_* settings, which are rewritten on
+  // every save) holding the time the module switched from protocol 3.0 (MD5)
+  // to 3.1 (SHA-256). Callbacks for transactions started before it may still
+  // carry an MD5 signature.
+  public const SHA256_SINCE_SETTING_CODE = 'viabill_protocol';
+  public const SHA256_SINCE_SETTING_KEY = 'viabill_protocol_sha256_since';
+
+  // How long after the switch MD5-signed callbacks are still accepted.
+  public const LEGACY_MD5_CALLBACK_DAYS = 30;
+
+  // Module version, used when it cannot be read from the installed
+  // modification (keep in sync with install.xml).
+  public const MODULE_VERSION = '1.1.2';
+
+  // Seconds to wait for a connection to / a complete answer from the ViaBill API.
+  public const API_CONNECT_TIMEOUT = 10;
+  public const API_TIMEOUT = 30;
+
+  // ViaBill transaction states stored in the viabill_transaction table.
+  public const TX_STATUS_INITIATED = 'INITIATED';
+  public const TX_STATUS_PAID = 'PAID';
+  public const TX_STATUS_CANCELLED = 'CANCELLED';
+  public const TX_STATUS_VOIDED = 'VOIDED';
   public const AFFILIATE = 'open_cart';
   public const TRANSACTION_TYPE_AUTHORIZE_ONLY = 'authorize_only';
   public const TRANSACTION_TYPE_AUTHORIZE_CAPTURE = 'authorize_capture';

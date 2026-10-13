@@ -41,7 +41,7 @@
       <div class="card-body">
 
         <form id="form-viabill" action="{{ save_action }}" method="post" enctype="multipart/form-data">
-          <input type="hidden" name="user_token" value="{{ user_token }}" />
+          <input type="hidden" name="user_token" value="{{ user_token|e }}" />
           
           <!-- Enhanced Nav tabs -->
           <ul class="nav nav-tabs mb-4" role="tablist">
@@ -77,7 +77,7 @@
                     <div class="col-sm-10">
                       <div class="input-group">
                         <span class="input-group-text"><i class="fa fa-lock"></i></span>
-                        <input type="text" name="payment_viabill_api_key" value="{{ payment_viabill_api_key }}" 
+                        <input type="text" name="payment_viabill_api_key" value="{{ payment_viabill_api_key|e }}" 
                                id="input-api-key" class="form-control" placeholder="Enter your ViaBill API Key" autocomplete="off" required />
                       </div>
                     </div>
@@ -106,7 +106,7 @@
                     </label>
                     <div class="col-sm-10">
                       <textarea name="payment_viabill_pricetag" rows="5" id="input-pricetag" 
-                                class="form-control" placeholder="Enter ViaBill PriceTag script" required>{{ payment_viabill_pricetag }}</textarea>
+                                class="form-control" placeholder="Enter ViaBill PriceTag script" required>{{ payment_viabill_pricetag|e }}</textarea>
                       {% if entry_pricetag_help %}
                         <div class="form-text">
                           <i class="fa fa-info-circle text-info"></i>
@@ -115,6 +115,15 @@
                       {% endif %}
                     </div>
                   </div>
+
+                  {% if credentials_missing and signup_url %}
+                    <div class="alert alert-info viabill-signup-note">
+                      <i class="fa fa-user-plus"></i>
+                      <strong>{{ text_signup_title|e }}</strong>
+                      {{ text_signup_text|e }}
+                      <a href="{{ signup_url|e }}" target="_blank" rel="noopener noreferrer">{{ text_signup_link|e }}</a>
+                    </div>
+                  {% endif %}
                 </div>
               </div>
 
@@ -256,7 +265,7 @@
                       <i class="fa fa-sort-numeric-up text-secondary"></i> {{ entry_sort_order }}
                     </label>
                     <div class="col-sm-10">
-                      <input type="number" name="payment_viabill_sort_order" value="{{ payment_viabill_sort_order }}" 
+                      <input type="number" name="payment_viabill_sort_order" value="{{ payment_viabill_sort_order|e }}" 
                              id="input-sort-order" class="form-control" min="0" />
                     </div>
                   </div>
@@ -344,7 +353,7 @@
                     <label class="col-sm-2 col-form-label" for="input-pricetag-product-dynamic">{{ entry_pricetag_product_dynamic_price }}</label>
                     <div class="col-sm-10">
                       <input type="text" name="payment_viabill_pricetag_product_dynamic_price"
-                            value="{{ payment_viabill_pricetag_product_dynamic_price }}"
+                            value="{{ payment_viabill_pricetag_product_dynamic_price|e }}"
                             id="input-pricetag-product-dynamic" class="form-control" />
                     </div>
                   </div>
@@ -352,7 +361,7 @@
                     <label class="col-sm-2 col-form-label" for="input-pricetag-product-trigger">{{ entry_pricetag_product_dynamic_price_trigger }}</label>
                     <div class="col-sm-10">
                       <input type="text" name="payment_viabill_pricetag_product_dynamic_price_trigger"
-                            value="{{ payment_viabill_pricetag_product_dynamic_price_trigger }}"
+                            value="{{ payment_viabill_pricetag_product_dynamic_price_trigger|e }}"
                             id="input-pricetag-product-trigger" class="form-control" />
                     </div>
                   </div>
@@ -360,7 +369,7 @@
                     <label class="col-sm-2 col-form-label" for="input-pricetag-product-delay">{{ entry_pricetag_product_dynamic_price_trigger_delay }}</label>
                     <div class="col-sm-10">
                       <input type="number" name="payment_viabill_pricetag_product_dynamic_price_trigger_delay"
-                            value="{{ payment_viabill_pricetag_product_dynamic_price_trigger_delay }}"
+                            value="{{ payment_viabill_pricetag_product_dynamic_price_trigger_delay|e }}"
                             id="input-pricetag-product-delay" class="form-control" min="0" />
                     </div>
                   </div>
@@ -368,7 +377,7 @@
                     <label class="col-sm-2 col-form-label" for="input-pricetag-product-selector">{{ entry_pricetag_product_append_selector }}</label>
                     <div class="col-sm-10">
                       <input type="text" name="payment_viabill_pricetag_product_append_selector"
-                            value="{{ payment_viabill_pricetag_product_append_selector }}"
+                            value="{{ payment_viabill_pricetag_product_append_selector|e }}"
                             id="input-pricetag-product-selector" class="form-control" />
                     </div>
                   </div>
@@ -395,7 +404,7 @@
                     <label class="col-sm-2 col-form-label" for="input-pricetag-product-width">{{ entry_pricetag_product_width }}</label>
                     <div class="col-sm-10">
                       <input type="text" name="payment_viabill_pricetag_product_width"
-                            value="{{ payment_viabill_pricetag_product_width }}"
+                            value="{{ payment_viabill_pricetag_product_width|e }}"
                             id="input-pricetag-product-width" class="form-control" />
                     </div>
                   </div>
@@ -414,7 +423,7 @@
                     <label class="col-sm-2 col-form-label" for="input-pricetag-cart-dynamic">{{ entry_pricetag_cart_dynamic_price }}</label>
                     <div class="col-sm-10">
                       <input type="text" name="payment_viabill_pricetag_cart_dynamic_price"
-                            value="{{ payment_viabill_pricetag_cart_dynamic_price }}"
+                            value="{{ payment_viabill_pricetag_cart_dynamic_price|e }}"
                             id="input-pricetag-cart-dynamic" class="form-control" />
                     </div>
                   </div>
@@ -422,7 +431,7 @@
                     <label class="col-sm-2 col-form-label" for="input-pricetag-cart-trigger">{{ entry_pricetag_cart_dynamic_price_trigger }}</label>
                     <div class="col-sm-10">
                       <input type="text" name="payment_viabill_pricetag_cart_dynamic_price_trigger"
-                            value="{{ payment_viabill_pricetag_cart_dynamic_price_trigger }}"
+                            value="{{ payment_viabill_pricetag_cart_dynamic_price_trigger|e }}"
                             id="input-pricetag-cart-trigger" class="form-control" />
                     </div>
                   </div>
@@ -430,7 +439,7 @@
                     <label class="col-sm-2 col-form-label" for="input-pricetag-cart-delay">{{ entry_pricetag_cart_dynamic_price_trigger_delay }}</label>
                     <div class="col-sm-10">
                       <input type="number" name="payment_viabill_pricetag_cart_dynamic_price_trigger_delay"
-                            value="{{ payment_viabill_pricetag_cart_dynamic_price_trigger_delay }}"
+                            value="{{ payment_viabill_pricetag_cart_dynamic_price_trigger_delay|e }}"
                             id="input-pricetag-cart-delay" class="form-control" min="0" />
                     </div>
                   </div>
@@ -438,7 +447,7 @@
                     <label class="col-sm-2 col-form-label" for="input-pricetag-cart-selector">{{ entry_pricetag_cart_append_selector }}</label>
                     <div class="col-sm-10">
                       <input type="text" name="payment_viabill_pricetag_cart_append_selector"
-                            value="{{ payment_viabill_pricetag_cart_append_selector }}"
+                            value="{{ payment_viabill_pricetag_cart_append_selector|e }}"
                             id="input-pricetag-cart-selector" class="form-control" />
                     </div>
                   </div>
@@ -465,7 +474,7 @@
                     <label class="col-sm-2 col-form-label" for="input-pricetag-cart-width">{{ entry_pricetag_cart_width }}</label>
                     <div class="col-sm-10">
                       <input type="text" name="payment_viabill_pricetag_cart_width"
-                            value="{{ payment_viabill_pricetag_cart_width }}"
+                            value="{{ payment_viabill_pricetag_cart_width|e }}"
                             id="input-pricetag-cart-width" class="form-control" />
                     </div>
                   </div>
@@ -484,7 +493,7 @@
                     <label class="col-sm-2 col-form-label" for="input-pricetag-checkout-dynamic">{{ entry_pricetag_checkout_dynamic_price }}</label>
                     <div class="col-sm-10">
                       <input type="text" name="payment_viabill_pricetag_checkout_dynamic_price"
-                            value="{{ payment_viabill_pricetag_checkout_dynamic_price }}"
+                            value="{{ payment_viabill_pricetag_checkout_dynamic_price|e }}"
                             id="input-pricetag-checkout-dynamic" class="form-control" />
                     </div>
                   </div>
@@ -492,7 +501,7 @@
                     <label class="col-sm-2 col-form-label" for="input-pricetag-checkout-trigger">{{ entry_pricetag_checkout_dynamic_price_trigger }}</label>
                     <div class="col-sm-10">
                       <input type="text" name="payment_viabill_pricetag_checkout_dynamic_price_trigger"
-                            value="{{ payment_viabill_pricetag_checkout_dynamic_price_trigger }}"
+                            value="{{ payment_viabill_pricetag_checkout_dynamic_price_trigger|e }}"
                             id="input-pricetag-checkout-trigger" class="form-control" />
                     </div>
                   </div>
@@ -500,7 +509,7 @@
                     <label class="col-sm-2 col-form-label" for="input-pricetag-checkout-delay">{{ entry_pricetag_checkout_dynamic_price_trigger_delay }}</label>
                     <div class="col-sm-10">
                       <input type="number" name="payment_viabill_pricetag_checkout_dynamic_price_trigger_delay"
-                            value="{{ payment_viabill_pricetag_checkout_dynamic_price_trigger_delay }}"
+                            value="{{ payment_viabill_pricetag_checkout_dynamic_price_trigger_delay|e }}"
                             id="input-pricetag-checkout-delay" class="form-control" min="0" />
                     </div>
                   </div>
@@ -508,7 +517,7 @@
                     <label class="col-sm-2 col-form-label" for="input-pricetag-checkout-selector">{{ entry_pricetag_checkout_append_selector }}</label>
                     <div class="col-sm-10">
                       <input type="text" name="payment_viabill_pricetag_checkout_append_selector"
-                            value="{{ payment_viabill_pricetag_checkout_append_selector }}"
+                            value="{{ payment_viabill_pricetag_checkout_append_selector|e }}"
                             id="input-pricetag-checkout-selector" class="form-control" />
                     </div>
                   </div>
@@ -535,7 +544,7 @@
                     <label class="col-sm-2 col-form-label" for="input-pricetag-checkout-width">{{ entry_pricetag_checkout_width }}</label>
                     <div class="col-sm-10">
                       <input type="text" name="payment_viabill_pricetag_checkout_width"
-                            value="{{ payment_viabill_pricetag_checkout_width }}"
+                            value="{{ payment_viabill_pricetag_checkout_width|e }}"
                             id="input-pricetag-checkout-width" class="form-control" />
                     </div>
                   </div>

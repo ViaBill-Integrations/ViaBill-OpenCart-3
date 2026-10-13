@@ -50,11 +50,11 @@ class ViaBillServices {
         'cancel_url',
         'callback_url',
         'test',
-        'md5check',
+        'sha256check',
         'tbyb'
       ],
       'optional_fields' => ['customParams', 'cartParams'],
-      'md5check'        => '{apikey}#{amount}#{currency}#{transaction}#{order_number}#{success_url}#{cancel_url}#{secret}',
+      'sha256check'        => '{apikey}#{amount}#{currency}#{transaction}#{order_number}#{success_url}#{cancel_url}#{secret}',
       'status_codes'    => [
         200 => 'messages.viabillApiMessages.successfulRequest',
         204 => 'messages.viabillApiMessages.noContentResponse',
@@ -161,7 +161,7 @@ class ViaBillServices {
 
       foreach ($ed['required_fields'] as $field) {
         $isTest = ($field === 'test');
-        // Check for signature/md5check fields.
+        // Check for signature/sha256check fields.
         if (array_key_exists($field, $ed)) {
           $format = $ed[$field];
           // Parse the format to generate a signature if one is required.
@@ -173,7 +173,12 @@ class ViaBillServices {
             ViaBillHelper::log($error_msg, 'error');
             return FALSE;
           }
-          $requestData[$field] = md5($format);
+          // For test checkouts ViaBill expects the test flag after the
+          // secret in the signed string (callbacks never carry it).
+          if ($field === 'sha256check' && filter_var($testMode, FILTER_VALIDATE_BOOLEAN)) {
+            $format .= '#true';
+          }
+          $requestData[$field] = self::hashSignature($format);
           // Process the remaining required fields.
         }
         elseif (array_key_exists($field, $data)) {
@@ -220,6 +225,41 @@ class ViaBillServices {
     return FALSE;
   }
 
+  /**
+   * Build and send a request to a ViaBill API end point.
+   *
+   * The request body is built by getEndPointData() from the end point's
+   * declared fields only, and its signature is calculated there. The API
+   * secret is used for the signature but is never sent to ViaBill.
+   *
+   * @param string $endPoint The end point name, e.g. 'capture_transaction'
+   * @param array $data The request values (may include 'secret' for signing)
+   * @return array The sendApiRequest() result, or an error result
+   */
+  public static function request(string $endPoint, array $data): array {
+    $endPointData = self::getEndPointData($endPoint, $data);
+
+    if (empty($endPointData)) {
+      return [
+        'status' => 'error',
+        'message' => 'Could not build the ' . $endPoint . ' request.',
+      ];
+    }
+
+    return ViaBillHelper::sendApiRequest($endPointData['endpoint'], $endPointData['data'], $endPointData['method']);
+  }
+
+  /**
+   * Hash a signature string with the algorithm of the configured protocol
+   * (MD5 for protocol 3.0, SHA-256 otherwise).
+   *
+   * @param string $value
+   * @return string
+   */
+  public static function hashSignature(string $value): string {
+    return ViaBillConstants::PROTOCOL == '3.0' ? md5($value) : hash('sha256', $value);
+  }
+
   public static function getApiEndPoint($end_point) {
     // Check if the default ADDON name is still used.
     $addon_name = self::ADDON_NAME;
@@ -239,9 +279,9 @@ class ViaBillServices {
 
       return $end_point_settings;
     }
-    else {
-      exit("Unknown API End Point: $end_point");
-    }
+    // Unknown end point: log it and let the caller handle the failure,
+    // instead of terminating the request.
+    ViaBillHelper::log('Unknown API End Point: ' . $end_point, 'error');
 
     return FALSE;
   }

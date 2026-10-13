@@ -14,6 +14,7 @@ class ControllerExtensionPaymentViabill extends Controller {
             'heading_title', 'button_cancel',
             'text_credentials', 'text_credentials_intro', 'text_credentials_missing',
             'help_secret_key_saved',
+            'text_signup_title', 'text_signup_text', 'text_signup_link',
         ];
         
         foreach ($language_keys as $key) {
@@ -127,6 +128,10 @@ class ControllerExtensionPaymentViabill extends Controller {
 
         $data['credentials_missing'] = !$api_key_exists || !$secret_key_exists || empty($data['payment_viabill_pricetag']);
 
+        // Link to the ViaBill online signup form, shown below the credentials
+        // while they have not been filled in yet.
+        $data['signup_url'] = $data['credentials_missing'] ? $this->getSignupUrl() : '';
+
         // The API secret is never printed back to the page; the template
         // renders a masked password field that can be left empty to keep
         // the currently stored value.
@@ -203,7 +208,7 @@ class ControllerExtensionPaymentViabill extends Controller {
 
     // Get MyViaBill
     public function getMyViaBill(): string {
-        $myViaBillURL = null;
+        $myViaBillURL = '';
 
         $this->loadViabillHelpers();        
 
@@ -214,11 +219,7 @@ class ControllerExtensionPaymentViabill extends Controller {
             // Get myviabill endpoint
             $myviabill_endpoint = ViaBillServices::getApiEndPoint('myviabill');
 
-            if (ViaBillConstants::PROTOCOL == '3.0') {                
-                $signature = md5($key . '#' . $secret);
-            } else {                
-                $signature = hash('sha256', $key . '#' . $secret);
-            }            
+            $signature = ViaBillServices::hashSignature($key . '#' . $secret);            
 
             // Prepare  data
             $myviabill_data = [
@@ -233,7 +234,7 @@ class ControllerExtensionPaymentViabill extends Controller {
                 // Extract API credentials from response
                 $api_data = json_decode($response['body'], true);
 				if (isset($api_data['url'])) {
-					$myViaBillURL = $api_data['url'];
+					$myViaBillURL = (string)$api_data['url'];
 				}             
             }
         }    
@@ -254,11 +255,7 @@ class ControllerExtensionPaymentViabill extends Controller {
             // Get notifications endpoint
             $notifications_endpoint = ViaBillServices::getApiEndPoint('notifications');
 
-            if (ViaBillConstants::PROTOCOL == '3.0') {                
-                $signature = md5($key . '#' . $secret);
-            } else {                
-                $signature = hash('sha256', $key . '#' . $secret);
-            }            
+            $signature = ViaBillServices::hashSignature($key . '#' . $secret);            
 
             // Prepare  data
             $notifications_data = [
@@ -295,7 +292,7 @@ class ControllerExtensionPaymentViabill extends Controller {
 
         // Load helper classes
 
-        $order_id = $this->request->get['order_id'];
+        $order_id = isset($this->request->get['order_id']) ? (int)$this->request->get['order_id'] : 0;
 
         // Fetch order details from the database or API
         $order_info = $this->model_extension_payment_viabill->getOrder($order_id);
@@ -304,8 +301,15 @@ class ControllerExtensionPaymentViabill extends Controller {
             return $this->load->view('error/not_found', ['error' => 'Order not found']);
         }
 
+        // Result of the last capture/refund/void action, shown once.
+        $success = $this->session->data['viabill_order_success'] ?? '';
+        $error = $this->session->data['viabill_order_error'] ?? '';
+        unset($this->session->data['viabill_order_success'], $this->session->data['viabill_order_error']);
+
         // Prepare data for the template
         $data = [
+            'success' => $success,
+            'error' => $error,
             'order_id' => $order_id,
             'transaction_id' => $order_info['transaction_id'] ?? '',
             'order_total' => $order_info['total'],
@@ -333,18 +337,22 @@ class ControllerExtensionPaymentViabill extends Controller {
         $this->load->language('extension/payment/viabill');
         $this->load->model('extension/payment/viabill');
 
-        if ($this->request->server['REQUEST_METHOD'] == 'POST' && $this->user->hasPermission('modify', 'extension/payment/viabill')) {
-            $order_id = $this->request->post['order_id'];
-            $capture_amount = $this->request->post['capture_amount'];
+        $order_id = $this->getRequestOrderId();
 
-            // Here you would call your API or service to capture the payment
-            $result = $this->model_extension_payment_viabill->capturePayment($order_id, $capture_amount);
+        if ($this->canRunPaymentAction()) {
+            $capture_amount = $this->getRequestAmount('capture_amount');
 
-            if ($result['success']) {
-                $this->session->data['success'] = $this->language->get('text_capture_success');
-                $this->model_extension_payment_viabill->updateTransactionAmounts($order_id, $capture_amount, null);
+            if ($capture_amount === null) {
+                $this->session->data['viabill_order_error'] = $this->language->get('text_capture_error') . ' ' . $this->language->get('error_amount');
             } else {
-                $this->session->data['error'] = $this->language->get('text_capture_error') . ' ' . $result['message'];
+                $result = $this->model_extension_payment_viabill->capturePayment($order_id, $capture_amount);
+
+                if ($result['success']) {
+                    $this->session->data['viabill_order_success'] = $this->language->get('text_capture_success');
+                    $this->model_extension_payment_viabill->updateTransactionAmounts($order_id, $result['amount'], null);
+                } else {
+                    $this->session->data['viabill_order_error'] = $this->language->get('text_capture_error') . ' ' . $result['message'];
+                }
             }
         }
 
@@ -358,18 +366,22 @@ class ControllerExtensionPaymentViabill extends Controller {
         $this->load->language('extension/payment/viabill');
         $this->load->model('extension/payment/viabill');
 
-        if ($this->request->server['REQUEST_METHOD'] == 'POST' && $this->user->hasPermission('modify', 'extension/payment/viabill')) {
-            $order_id = $this->request->post['order_id'];
-            $refund_amount = $this->request->post['refund_amount'];
+        $order_id = $this->getRequestOrderId();
 
-            // Here you would call your API or service to refund the payment
-            $result = $this->model_extension_payment_viabill->refundPayment($order_id, $refund_amount);
+        if ($this->canRunPaymentAction()) {
+            $refund_amount = $this->getRequestAmount('refund_amount');
 
-            if ($result['success']) {
-                $this->session->data['success'] = $this->language->get('text_refund_success');
-                $this->model_extension_payment_viabill->updateTransactionAmounts($order_id, null, $refund_amount);
+            if ($refund_amount === null) {
+                $this->session->data['viabill_order_error'] = $this->language->get('text_refund_error') . ' ' . $this->language->get('error_amount');
             } else {
-                $this->session->data['error'] = $this->language->get('text_refund_error') . ' ' . $result['message'];
+                $result = $this->model_extension_payment_viabill->refundPayment($order_id, $refund_amount);
+
+                if ($result['success']) {
+                    $this->session->data['viabill_order_success'] = $this->language->get('text_refund_success');
+                    $this->model_extension_payment_viabill->updateTransactionAmounts($order_id, null, $result['amount']);
+                } else {
+                    $this->session->data['viabill_order_error'] = $this->language->get('text_refund_error') . ' ' . $result['message'];
+                }
             }
         }
 
@@ -383,20 +395,119 @@ class ControllerExtensionPaymentViabill extends Controller {
         $this->load->language('extension/payment/viabill');
         $this->load->model('extension/payment/viabill');
 
-        if ($this->request->server['REQUEST_METHOD'] == 'POST' && $this->user->hasPermission('modify', 'extension/payment/viabill')) {
-            $order_id = $this->request->post['order_id'];
+        $order_id = $this->getRequestOrderId();
 
-            // Here you would call your API or service to void the payment
+        if ($this->canRunPaymentAction()) {
             $result = $this->model_extension_payment_viabill->voidPayment($order_id);
 
             if ($result['success']) {
-                $this->session->data['success'] = $this->language->get('text_void_success');
+                $this->session->data['viabill_order_success'] = $this->language->get('text_void_success');
             } else {
-                $this->session->data['error'] = $this->language->get('text_void_error') . ' ' . $result['message'];
+                $this->session->data['viabill_order_error'] = $this->language->get('text_void_error') . ' ' . $result['message'];
             }
         }
 
         $this->response->redirect($this->url->link('sale/order/info', 'user_token=' . $this->session->data['user_token'] . '&order_id=' . $order_id));
+    }
+
+    /**
+     * The results of the payment actions are shown in the ViaBill panel of the
+     * order page (OpenCart's order page does not show session messages).
+     *
+     * Payment actions (capture/refund/void) are only run for POST requests by
+     * users with modify permission. (The user_token in the action URL is
+     * checked by OpenCart for every admin request.)
+     */
+    private function canRunPaymentAction(): bool {
+        if ($this->request->server['REQUEST_METHOD'] != 'POST') {
+            return false;
+        }
+
+        if (!$this->user->hasPermission('modify', 'extension/payment/viabill')) {
+            $this->session->data['viabill_order_error'] = $this->language->get('error_permission');
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Get the order id of a payment action request.
+     */
+    private function getRequestOrderId(): int {
+        if (isset($this->request->post['order_id'])) {
+            return (int)$this->request->post['order_id'];
+        }
+
+        return isset($this->request->get['order_id']) ? (int)$this->request->get['order_id'] : 0;
+    }
+
+    /**
+     * Get a positive amount from the posted form, or null if it is not a
+     * valid number. A decimal comma is accepted.
+     */
+    private function getRequestAmount(string $field): ?float {
+        if (!isset($this->request->post[$field]) || !is_scalar($this->request->post[$field])) {
+            return null;
+        }
+
+        $value = str_replace(',', '.', trim((string)$this->request->post[$field]));
+
+        if (!is_numeric($value) || (float)$value <= 0) {
+            return null;
+        }
+
+        return round((float)$value, 2);
+    }
+
+    /**
+     * Build the ViaBill online signup form URL for this shop and module version.
+     *
+     * @return string
+     */
+    private function getSignupUrl(): string {
+        if (defined('HTTPS_CATALOG') && HTTPS_CATALOG) {
+            $shop_url = HTTPS_CATALOG;
+        } elseif (defined('HTTP_CATALOG') && HTTP_CATALOG) {
+            $shop_url = HTTP_CATALOG;
+        } else {
+            $shop_url = (string)$this->config->get('config_url');
+        }
+
+        $params = [
+            'utm_source'          => 'opencart',
+            'utm_medium'          => 'ecommerce_extension',
+            'utm_campaign'        => 'merchant_signup',
+            'utm_content'         => 'settings_page',
+            'shop_url'            => rtrim($shop_url, '/'),
+            'integration_version' => $this->getModuleVersion(),
+        ];
+
+        return 'https://portal.viabill.com/signup?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+    }
+
+    /**
+     * Get the installed ViaBill module version.
+     *
+     * OpenCart 3 stores the install.xml of an installed extension (including
+     * its <version>) in the modification table; the module constant is used
+     * when it cannot be found there.
+     *
+     * @return string
+     */
+    private function getModuleVersion(): string {
+        $this->load->model('setting/modification');
+
+        $modification_info = $this->model_setting_modification->getModificationByCode('viabill_payments');
+
+        if (!empty($modification_info['version'])) {
+            return (string)$modification_info['version'];
+        }
+
+        $this->loadViabillHelpers();
+
+        return ViaBillConstants::MODULE_VERSION;
     }
 
     /**

@@ -88,3 +88,18 @@ $_['button_cancel']          = 'Cancelar';
 $_['error_permission']       = 'Advertencia: ¡No tienes permiso para modificar los pagos ViaBill!';
 $_['error_api_key']          = '¡La clave API es obligatoria!';
 $_['error_secret_key']       = '¡La clave secreta es obligatoria!';
+
+// Signup note, payment action messages and order history comments
+$_['text_signup_title'] = '¿Aún no tiene las credenciales de su cuenta ViaBill?';
+$_['text_signup_text'] = 'Complete el formulario de registro en línea de ViaBill para obtener su clave API, su secreto API y su script de PriceTag.';
+$_['text_signup_link'] = 'Ir al formulario de registro de ViaBill';
+$_['error_amount'] = 'Introduzca un importe válido mayor que 0.';
+$_['error_no_transaction'] = 'No se ha encontrado ninguna transacción de ViaBill para este pedido.';
+$_['error_capture_amount_range'] = 'El importe a capturar debe ser mayor que 0 y como máximo %s.';
+$_['error_refund_amount_range'] = 'El importe a reembolsar debe ser mayor que 0 y como máximo %s.';
+$_['error_void_captured'] = 'El pago ya se ha capturado (parcialmente) y ya no se puede anular. Utilice un reembolso en su lugar.';
+$_['error_api_http'] = 'ViaBill respondió con HTTP %d.';
+$_['error_api_unreachable'] = 'No se ha podido conectar con ViaBill.';
+$_['text_history_captured'] = 'Pago de ViaBill capturado: %s %s';
+$_['text_history_refunded'] = 'Pago de ViaBill reembolsado: %s %s';
+$_['text_history_voided'] = 'Autorización de ViaBill anulada';

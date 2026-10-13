@@ -109,28 +109,34 @@ class ModelExtensionPaymentViabill extends Model {
 
     /**
      * Capture a previously authorized ViaBill transaction.
-     * @param array $capture_data The data used for the capture request.     
-     * @return bool success
+     *
+     * @param string $transaction_id The ViaBill transaction id
+     * @param string $amount The amount to capture, formatted with 2 decimals
+     * @param string $currency The currency code
+     * @return array ['success' => bool, 'message' => string]
      */
-    public function capturePayment($capture_data): array {
-        // Load language class
-        $this->load->language('extension/payment/viabill');
-        
+    public function capturePayment(string $transaction_id, string $amount, string $currency): array {
         // Load helper classes
         $this->loadViabillHelpers();
-    
-        $registry = $this->registry;
-        ViaBillServices::setRegistry($registry);        
-        
-        // Endpoint for capture
-        $capture_endpoint = ViaBillServices::getApiEndPoint('capture_transaction');        
-        $response = ViaBillHelper::sendApiRequest($capture_endpoint['endpoint'], $capture_data, $capture_endpoint['method']);
-        if ($response['status'] == 'success') {                        
-            return ['success' => true];
-        } else {
-            // Log or handle capture failure
-            return ['success' => false];
+
+        ViaBillServices::setRegistry($this->registry);
+
+        $response = ViaBillServices::request('capture_transaction', [
+            'id'       => $transaction_id,
+            'apikey'   => (string)$this->config->get('payment_viabill_api_key'),
+            'secret'   => (string)$this->config->get('payment_viabill_secret_key'), // used for the signature only
+            'amount'   => $amount,
+            'currency' => $currency,
+        ]);
+
+        if (ViaBillHelper::isSuccessfulResponse($response)) {
+            return ['success' => true, 'message' => ''];
         }
+
+        $httpCode = isset($response['http_code']) ? (int)$response['http_code'] : 0;
+        $details = isset($response['message']) ? $response['message'] : (isset($response['body']) ? $response['body'] : '');
+
+        return ['success' => false, 'message' => 'HTTP ' . $httpCode . ': ' . $details];
     }
 }
 ?>
