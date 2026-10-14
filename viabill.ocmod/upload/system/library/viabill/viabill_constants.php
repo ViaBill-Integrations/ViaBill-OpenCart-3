@@ -21,7 +21,7 @@ class ViaBillConstants {
 
   // Module version, used when it cannot be read from the installed
   // modification (keep in sync with install.xml).
-  public const MODULE_VERSION = '1.1.2';
+  public const MODULE_VERSION = '1.1.3';
 
   // Seconds to wait for a connection to / a complete answer from the ViaBill API.
   public const API_CONNECT_TIMEOUT = 10;

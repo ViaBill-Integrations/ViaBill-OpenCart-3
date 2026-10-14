@@ -48,6 +48,9 @@ class ControllerExtensionPaymentViabill extends Controller {
         // Define the action URL to which the confirm button will send the AJAX request.
         // This should point to your "confirm" method in this controller.
         $data['action'] = $this->url->link('extension/payment/viabill/confirm', '', true);
+
+        // Shown when the payment cannot be started and no specific error is returned.
+        $data['error_payment_failed'] = $this->language->get('error_payment_failed');
         
         // Render and return the view template
         return $this->load->view('extension/payment/viabill', $data);
@@ -141,9 +144,11 @@ class ControllerExtensionPaymentViabill extends Controller {
         $platformValue = ViaBillConstants::AFFILIATE;  // Identify the platform (ViaBill may expect the platform name)
 
         // URLs
-        $success_url = $this->url->link('checkout/success', '', true);
-        $cancel_url = $this->url->link('extension/payment/viabill/cancel', 'order_id=' . $order_id, true);
-        $callback_url = $this->url->link('extension/payment/viabill/callback', '', true);
+        // OpenCart 3 joins URL parameters with "&amp;" (for HTML output); ViaBill
+        // needs plain URLs, otherwise e.g. order_id is lost on the cancel URL.
+        $success_url = str_replace('&amp;', '&', $this->url->link('checkout/success', '', true));
+        $cancel_url = str_replace('&amp;', '&', $this->url->link('extension/payment/viabill/cancel', 'order_id=' . $order_id, true));
+        $callback_url = str_replace('&amp;', '&', $this->url->link('extension/payment/viabill/callback', '', true));
 
         // Assemble data for POST to ViaBill's checkout-authorize API. The
         // sha256check checksum (protocol 3.1) is calculated from these values

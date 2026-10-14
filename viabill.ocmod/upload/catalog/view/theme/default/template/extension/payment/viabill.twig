@@ -16,8 +16,15 @@ $('#button-confirm').on('click', function() {
             $('#button-confirm').button('reset');
         },
         success: function(json) {
+            $('#viabill-confirm-error').remove();
+
             if (json['redirect']) {
                 location = json['redirect'];
+            } else {
+                // Show why the payment could not be started (e.g. ViaBill refused the request).
+                var message = json['error'] ? json['error'] : '{{ error_payment_failed|e('js') }}';
+
+                $('#button-confirm').closest('.buttons').before($('<div id="viabill-confirm-error" class="alert alert-danger"></div>').text(message));
             }
         },
         error: function(xhr, ajaxOptions, thrownError) {
