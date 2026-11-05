@@ -104,7 +104,23 @@ class ControllerExtensionPaymentViabill extends Controller {
         $data['payment_viabill_capture_order_status_id'] = $this->config->get('payment_viabill_capture_order_status_id') ?? $default_captured_order_status;
         $data['payment_viabill_sort_order'] = $this->config->get('payment_viabill_sort_order') ?? 0;
 
-        $data['payment_viabill_hide_checkout'] = $this->config->get('payment_viabill_hide_checkout') ?? 0;        
+        $data['payment_viabill_hide_checkout'] = $this->config->get('payment_viabill_hide_checkout') ?? 0;
+
+        // Legal note (credit warning) at the checkout. It is enabled unless the
+        // merchant switches it off; an empty text means the default text.
+        // A setting that was never saved is returned as null (or '').
+        $legal_note_status = $this->config->get('payment_viabill_legal_note_status');
+        $data['payment_viabill_legal_note_status'] = ($legal_note_status === null || $legal_note_status === '') ? 1 : (int)$legal_note_status;
+        $legal_note_text = $this->config->get('payment_viabill_legal_note_text');
+        $data['payment_viabill_legal_note_text'] = is_array($legal_note_text) ? $legal_note_text : [];
+        $data['payment_viabill_legal_note_language'] = $this->config->get('payment_viabill_legal_note_language') ?: 'auto';
+
+        $this->load->model('localisation/language');
+        $data['languages'] = $this->model_localisation_language->getLanguages();
+
+        $data['text_legal_note_default_value'] = ViaBillHelper::getLegalNoteDefaultText(
+            ViaBillHelper::getLegalNoteLanguageCode($data['payment_viabill_legal_note_language'], $this->config->get('config_language'))
+        );
 
         // Add Geo Zone configuration
         $data['payment_viabill_geo_zone_id'] = $this->config->get('payment_viabill_geo_zone_id') ?? 0;

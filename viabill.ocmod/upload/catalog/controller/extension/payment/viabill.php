@@ -44,7 +44,12 @@ class ControllerExtensionPaymentViabill extends Controller {
         
         // Check if the module is operating in test mode
         $data['test_mode'] = $this->config->get('payment_viabill_test') ? true : false;
-        
+
+        // Legal note (credit warning) and its stylesheet, which merchants can override
+        $data['legal_note'] = $this->model_extension_payment_viabill->getLegalNote();
+        $server = !empty($this->request->server['HTTPS']) ? $this->config->get('config_ssl') : $this->config->get('config_url');
+        $data['legal_note_css'] = $server . 'catalog/view/theme/default/stylesheet/viabill-legal-note.css';
+
         // Define the action URL to which the confirm button will send the AJAX request.
         // This should point to your "confirm" method in this controller.
         $data['action'] = $this->url->link('extension/payment/viabill/confirm', '', true);

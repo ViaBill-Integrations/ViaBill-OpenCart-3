@@ -1,3 +1,8 @@
+{% if legal_note %}
+  {# legal_note is sanitized HTML, see the catalog model getLegalNote() #}
+  <link href="{{ legal_note_css }}" rel="stylesheet" />
+  <div class="viabill-legal-note">{{ legal_note }}</div>
+{% endif %}
 <div class="buttons">
   <div class="pull-right">
     <input type="button" value="{{ button_confirm }}" id="button-confirm" class="btn btn-primary" />

@@ -133,10 +133,12 @@ class ViaBillHelper {
       // Execute the request
       $response = curl_exec($ch);
 
-      // Check for errors
+      // Check for errors. The cURL handle is not closed with curl_close(): it
+      // has no effect since PHP 8.0 and is deprecated since PHP 8.5. The
+      // handle is freed when it goes out of scope.
       if (curl_errno($ch)) {
           $error = curl_error($ch);
-          curl_close($ch);            
+          unset($ch);
           return [
               'status' => 'error',
               'message' => $error
@@ -148,7 +150,7 @@ class ViaBillHelper {
       $headers = substr($response, 0, $header_size);
       $body = substr($response, $header_size);
 
-      curl_close($ch);
+      unset($ch);
 
       // If not auto_redirecting, check for redirect in headers
       if (!$auto_redirect && preg_match('/^Location:\s*(\S+)\s*$/mi', $headers, $matches)) {
@@ -209,5 +211,81 @@ class ViaBillHelper {
     return $response['status'] === 'success' && $http_code >= 200 && $http_code < 300;
   }
 
+  /**
+   * Default legal note (credit warning), used if the language file has none.
+   */
+  const LEGAL_NOTE_DEFAULT_TEXT = 'Warning! Borrow responsibly - it costs money.';
+
+  /**
+   * HTML tags the legal note may contain, e.g. a link to the terms.
+   */
+  const LEGAL_NOTE_ALLOWED_TAGS = '<a><b><strong><em><i><br><p><span>';
+
+  /**
+   * OpenCart language codes of the fixed legal note languages.
+   */
+  const LEGAL_NOTE_LANGUAGE_CODES = [
+    'en' => 'en-gb',
+    'da' => 'da-dk',
+    'es' => 'es-es',
+  ];
+
+  /**
+   * Get the default legal note from the extension's catalog language file of
+   * the given language. The file is read directly, so the language does not
+   * have to be installed in the shop.
+   *
+   * @param string $language_code OpenCart language code, e.g. 'da-dk'
+   * @return string
+   */
+  public static function getLegalNoteDefaultText($language_code) {
+    static $texts = [];
+
+    $language_code = preg_replace('/[^a-z0-9-]/', '', strtolower((string)$language_code));
+
+    if (!isset($texts[$language_code])) {
+      $texts[$language_code] = self::LEGAL_NOTE_DEFAULT_TEXT;
+      // DIR_CATALOG is only defined in the admin.
+      $catalog_dir = defined('DIR_CATALOG') ? DIR_CATALOG : DIR_APPLICATION;
+      $file = $catalog_dir . 'language/' . $language_code . '/extension/payment/viabill.php';
+
+      if ($language_code !== '' && is_file($file)) {
+        // Language files fill a local $_ array.
+        $_ = [];
+        require $file;
+        if (!empty($_['text_legal_note_default'])) {
+          $texts[$language_code] = (string)$_['text_legal_note_default'];
+        }
+      }
+    }
+
+    return $texts[$language_code];
+  }
+
+  /**
+   * Get the language code to show the default legal note in.
+   *
+   * @param string $setting 'auto', 'en', 'da' or 'es'
+   * @param string $current_code OpenCart code of the current language, used for 'auto'
+   * @return string
+   */
+  public static function getLegalNoteLanguageCode($setting, $current_code) {
+    return isset(self::LEGAL_NOTE_LANGUAGE_CODES[$setting]) ? self::LEGAL_NOTE_LANGUAGE_CODES[$setting] : (string)$current_code;
+  }
+
+  /**
+   * Keep only simple, safe HTML in a legal note entered by the merchant.
+   *
+   * @param string $text
+   * @return string
+   */
+  public static function sanitizeLegalNote($text) {
+    $text = strip_tags((string)$text, self::LEGAL_NOTE_ALLOWED_TAGS);
+    // Remove event handler attributes and javascript: links.
+    $text = preg_replace('/\s+on[a-z]+\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)/i', '', $text);
+    $text = preg_replace('/(href|src)\s*=\s*(["\']?)\s*javascript:[^"\'>\s]*\2/i', '$1="#"', $text);
+
+    return trim($text);
+  }
 
 }

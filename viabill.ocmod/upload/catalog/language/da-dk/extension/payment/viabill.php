@@ -20,3 +20,6 @@ $_['text_history_capture_failed'] = 'ViaBill: Den automatiske hævning mislykked
 $_['text_history_cancelled'] = 'ViaBill: Betalingen blev annulleret.';
 $_['text_history_rejected'] = 'ViaBill: Betalingen blev afvist af ViaBill eller mislykkedes.';
 $_['text_history_status'] = 'ViaBill: Betalingsstatus: %s';
+
+// Legal note (credit warning)
+$_['text_legal_note_default'] = 'Advarsel! Lån med omtanke - det koster penge.';

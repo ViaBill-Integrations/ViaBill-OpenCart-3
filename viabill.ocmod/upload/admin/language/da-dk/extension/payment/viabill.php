@@ -103,3 +103,17 @@ $_['error_api_unreachable'] = 'Der kunne ikke oprettes forbindelse til ViaBill.'
 $_['text_history_captured'] = 'ViaBill-betaling hævet: %s %s';
 $_['text_history_refunded'] = 'ViaBill-betaling krediteret: %s %s';
 $_['text_history_voided'] = 'ViaBill-autorisation annulleret';
+
+// Legal note (credit warning)
+$_['text_legal_note'] = 'Juridisk meddelelse';
+$_['text_legal_note_intro'] = 'Den juridiske meddelelse er en kort informationstekst, der vises for kunderne ved kassen, når ViaBill er valgt som betalingsmetode, f.eks. en advarsel om, at det koster penge at låne penge.';
+$_['entry_legal_note_status'] = 'Status';
+$_['entry_legal_note_text'] = 'Tekst';
+$_['help_legal_note_text'] = 'Lad feltet være tomt for at bruge standardmeddelelsen på det sprog, der er valgt nedenfor.';
+$_['text_legal_note_default'] = 'Standardmeddelelse:';
+$_['entry_legal_note_language'] = 'Sprog';
+$_['help_legal_note_language'] = 'Sproget for standardmeddelelsen. "Automatisk" bruger kundens sprog.';
+$_['text_legal_note_language_auto'] = 'Automatisk';
+$_['text_legal_note_language_en'] = 'Engelsk';
+$_['text_legal_note_language_da'] = 'Dansk';
+$_['text_legal_note_language_es'] = 'Spansk';

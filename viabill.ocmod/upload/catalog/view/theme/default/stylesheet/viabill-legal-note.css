@@ -1,0 +1,5 @@
+/* Legal note (credit warning) next to the ViaBill payment method, see template/extension/payment/viabill.twig */
+.viabill-legal-note {
+    font-weight: 600;
+    margin: 0.5em 0;
+}

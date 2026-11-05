@@ -101,6 +101,39 @@ class ModelExtensionPaymentViabill extends Model {
         }
     }
 
+    /**
+     * Get the legal note (credit warning) to show at the checkout: the
+     * merchant's own text for the current language if set, otherwise the
+     * default text in the configured language. Empty if switched off.
+     *
+     * @return string Safe HTML
+     */
+    public function getLegalNote(): string {
+        $this->loadViabillHelpers();
+
+        // Enabled unless the merchant has switched it off. A setting that was
+        // never saved is returned as null (or '').
+        $status = $this->config->get('payment_viabill_legal_note_status');
+        if ($status !== null && $status !== '' && !$status) {
+            return '';
+        }
+
+        $texts = $this->config->get('payment_viabill_legal_note_text');
+        $language_id = (int)$this->config->get('config_language_id');
+        $text = is_array($texts) && isset($texts[$language_id]) ? trim((string)$texts[$language_id]) : '';
+
+        if ($text !== '') {
+            // Form input is stored HTML-escaped by OpenCart.
+            return ViaBillHelper::sanitizeLegalNote(html_entity_decode($text, ENT_QUOTES, 'UTF-8'));
+        }
+
+        $language = (string)($this->config->get('payment_viabill_legal_note_language') ?: 'auto');
+
+        return ViaBillHelper::sanitizeLegalNote(ViaBillHelper::getLegalNoteDefaultText(
+            ViaBillHelper::getLegalNoteLanguageCode($language, $this->config->get('config_language'))
+        ));
+    }
+
     private function loadViabillHelpers() {
         require_once(DIR_SYSTEM . 'library/viabill/viabill_constants.php');
         require_once(DIR_SYSTEM . 'library/viabill/viabill_services.php');

@@ -103,3 +103,17 @@ $_['error_api_unreachable'] = 'No se ha podido conectar con ViaBill.';
 $_['text_history_captured'] = 'Pago de ViaBill capturado: %s %s';
 $_['text_history_refunded'] = 'Pago de ViaBill reembolsado: %s %s';
 $_['text_history_voided'] = 'Autorización de ViaBill anulada';
+
+// Legal note (credit warning)
+$_['text_legal_note'] = 'Aviso legal';
+$_['text_legal_note_intro'] = 'El aviso legal es un breve texto informativo que se muestra a los clientes en la página de pago cuando se selecciona ViaBill como método de pago, por ejemplo, una advertencia de que pedir dinero prestado cuesta dinero.';
+$_['entry_legal_note_status'] = 'Estado';
+$_['entry_legal_note_text'] = 'Texto';
+$_['help_legal_note_text'] = 'Déjelo vacío para usar el aviso legal predeterminado, en el idioma seleccionado abajo.';
+$_['text_legal_note_default'] = 'Aviso legal predeterminado:';
+$_['entry_legal_note_language'] = 'Idioma';
+$_['help_legal_note_language'] = 'Idioma del aviso legal predeterminado. "Automático" usa el idioma del cliente.';
+$_['text_legal_note_language_auto'] = 'Automático';
+$_['text_legal_note_language_en'] = 'Inglés';
+$_['text_legal_note_language_da'] = 'Danés';
+$_['text_legal_note_language_es'] = 'Español';

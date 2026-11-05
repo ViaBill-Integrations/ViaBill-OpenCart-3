@@ -104,3 +104,17 @@ $_['error_api_unreachable'] = 'ViaBill could not be reached.';
 $_['text_history_captured'] = 'ViaBill payment captured: %s %s';
 $_['text_history_refunded'] = 'ViaBill payment refunded: %s %s';
 $_['text_history_voided'] = 'ViaBill authorization voided';
+
+// Legal note (credit warning)
+$_['text_legal_note'] = 'Legal Note';
+$_['text_legal_note_intro'] = 'The legal note is a short information text shown to customers at checkout when ViaBill is selected as the payment method, such as a warning that borrowing money costs money.';
+$_['entry_legal_note_status'] = 'Status';
+$_['entry_legal_note_text'] = 'Text';
+$_['help_legal_note_text'] = 'Leave empty to use the default legal note, in the language selected below.';
+$_['text_legal_note_default'] = 'Default legal note:';
+$_['entry_legal_note_language'] = 'Language';
+$_['help_legal_note_language'] = 'Language of the default legal note. "Auto" uses the language of the customer.';
+$_['text_legal_note_language_auto'] = 'Auto';
+$_['text_legal_note_language_en'] = 'English';
+$_['text_legal_note_language_da'] = 'Danish';
+$_['text_legal_note_language_es'] = 'Spanish';

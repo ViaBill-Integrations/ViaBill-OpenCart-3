@@ -20,3 +20,6 @@ $_['text_history_capture_failed'] = 'ViaBill: La captura automática ha fallado.
 $_['text_history_cancelled'] = 'ViaBill: El pago ha sido cancelado.';
 $_['text_history_rejected'] = 'ViaBill: El pago ha sido rechazado por ViaBill o ha fallado.';
 $_['text_history_status'] = 'ViaBill: Estado del pago: %s';
+
+// Legal note (credit warning)
+$_['text_legal_note_default'] = '¡Advertencia! Pide prestado con responsabilidad - cuesta dinero.';
