@@ -23,3 +23,4 @@ $_['text_history_status'] = 'ViaBill: Betalingsstatus: %s';
 
 // Legal note (credit warning)
 $_['text_legal_note_default'] = 'Advarsel! Lån med omtanke - det koster penge.';
+$_['text_legal_note_paying_with'] = 'Du betaler med';

@@ -53,8 +53,47 @@ class ControllerExtensionPaymentViabill extends Controller {
                 $post_data['payment_viabill_pricetag'] = trim((string) $post_data['payment_viabill_pricetag']);
             }
 
+            // Styling of the legal note: the font size and the text color are
+            // stored in their valid form. A value that is not valid is left
+            // empty (the styling of the theme) and reported back on the form.
+            $legal_note_errors = [];
+
+            $font_size = isset($post_data['payment_viabill_legal_note_font_size']) ? trim((string)$post_data['payment_viabill_legal_note_font_size']) : '';
+            $post_data['payment_viabill_legal_note_font_size'] = ViaBillHelper::sanitizeLegalNoteFontSize($font_size);
+            if ($font_size !== '' && $post_data['payment_viabill_legal_note_font_size'] === '') {
+                $legal_note_errors[] = $this->language->get('error_legal_note_font_size');
+            }
+
+            $color = isset($post_data['payment_viabill_legal_note_color']) ? trim((string)$post_data['payment_viabill_legal_note_color']) : '';
+            $post_data['payment_viabill_legal_note_color'] = ViaBillHelper::sanitizeLegalNoteColor($color);
+            if ($color !== '' && $post_data['payment_viabill_legal_note_color'] === '') {
+                $legal_note_errors[] = $this->language->get('error_legal_note_color');
+            }
+
+            foreach (ViaBillHelper::LEGAL_NOTE_DEFAULT_MARGINS as $side => $default) {
+                $key = 'payment_viabill_legal_note_margin_' . $side;
+                $margin = isset($post_data[$key]) ? trim((string)$post_data[$key]) : '';
+                $post_data[$key] = ViaBillHelper::sanitizeLegalNoteMargin($margin);
+                if ($margin !== '' && $post_data[$key] === '') {
+                    $legal_note_errors[] = $this->language->get('error_legal_note_margin');
+                }
+                if ($post_data[$key] === '') {
+                    $post_data[$key] = $default;
+                }
+            }
+            $legal_note_errors = array_unique($legal_note_errors);
+
             $this->model_extension_payment_viabill->saveSettings($post_data);
-            
+
+            if ($legal_note_errors) {
+                // The other settings are saved; show what was not on the form.
+                $this->session->data['viabill_error'] = implode(' ', $legal_note_errors);
+                $this->response->redirect($this->url->link('extension/payment/viabill',
+                    'user_token=' . $this->session->data['user_token'] . '&type=payment'));
+
+                return;
+            }
+
             // Set a success message and redirect back to extension list
             $this->session->data['success'] = $this->language->get('text_success');
             $this->response->redirect($this->url->link('extension/payment/viabill', 
@@ -106,21 +145,29 @@ class ControllerExtensionPaymentViabill extends Controller {
 
         $data['payment_viabill_hide_checkout'] = $this->config->get('payment_viabill_hide_checkout') ?? 0;
 
-        // Legal note (credit warning) at the checkout. It is enabled unless the
-        // merchant switches it off; an empty text means the default text.
-        // A setting that was never saved is returned as null (or '').
-        $legal_note_status = $this->config->get('payment_viabill_legal_note_status');
-        $data['payment_viabill_legal_note_status'] = ($legal_note_status === null || $legal_note_status === '') ? 1 : (int)$legal_note_status;
-        $legal_note_text = $this->config->get('payment_viabill_legal_note_text');
-        $data['payment_viabill_legal_note_text'] = is_array($legal_note_text) ? $legal_note_text : [];
+        // Legal note (credit warning) at the checkout. It is always shown, with
+        // the default text; only its look can be changed. A setting that was
+        // never saved is returned as null.
         $data['payment_viabill_legal_note_language'] = $this->config->get('payment_viabill_legal_note_language') ?: 'auto';
 
-        $this->load->model('localisation/language');
-        $data['languages'] = $this->model_localisation_language->getLanguages();
+        // The default text in each language, for the read-only text field.
+        $data['legal_note_texts'] = [];
+        foreach (['auto', 'en', 'da', 'es'] as $legal_note_language) {
+            $data['legal_note_texts'][$legal_note_language] = ViaBillHelper::getLegalNoteDefaultText(
+                ViaBillHelper::getLegalNoteLanguageCode($legal_note_language, $this->config->get('config_language'))
+            );
+        }
+        $data['legal_note_texts_json'] = json_encode($data['legal_note_texts']);
 
-        $data['text_legal_note_default_value'] = ViaBillHelper::getLegalNoteDefaultText(
-            ViaBillHelper::getLegalNoteLanguageCode($data['payment_viabill_legal_note_language'], $this->config->get('config_language'))
-        );
+        // Styling of the legal note. Empty means the styling of the theme.
+        $data['payment_viabill_legal_note_font_size'] = $this->config->get('payment_viabill_legal_note_font_size') ?? '';
+        $data['payment_viabill_legal_note_font_style'] = $this->config->get('payment_viabill_legal_note_font_style') ?: ViaBillHelper::LEGAL_NOTE_DEFAULT_FONT_STYLE;
+        $data['payment_viabill_legal_note_color'] = $this->config->get('payment_viabill_legal_note_color') ?? '';
+        $data['payment_viabill_legal_note_align'] = $this->config->get('payment_viabill_legal_note_align') ?? ViaBillHelper::LEGAL_NOTE_DEFAULT_ALIGN;
+        $data['payment_viabill_legal_note_extra_css'] = $this->config->get('payment_viabill_legal_note_extra_css') ?? '';
+        foreach (ViaBillHelper::LEGAL_NOTE_DEFAULT_MARGINS as $side => $default) {
+            $data['payment_viabill_legal_note_margin_' . $side] = $this->config->get('payment_viabill_legal_note_margin_' . $side) ?: $default;
+        }
 
         // Add Geo Zone configuration
         $data['payment_viabill_geo_zone_id'] = $this->config->get('payment_viabill_geo_zone_id') ?? 0;

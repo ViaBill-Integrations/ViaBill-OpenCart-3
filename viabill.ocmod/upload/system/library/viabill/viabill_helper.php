@@ -239,12 +239,37 @@ class ViaBillHelper {
    * @return string
    */
   public static function getLegalNoteDefaultText($language_code) {
-    static $texts = [];
+    return self::getLegalNoteLanguageString($language_code, 'text_legal_note_default', self::LEGAL_NOTE_DEFAULT_TEXT);
+  }
+
+  /**
+   * Get the "You are paying with" text shown before the ViaBill logo and the
+   * legal note, in the given language.
+   *
+   * @param string $language_code OpenCart language code, e.g. 'da-dk'
+   * @return string
+   */
+  public static function getLegalNotePayingWithText($language_code) {
+    return self::getLegalNoteLanguageString($language_code, 'text_legal_note_paying_with', 'You are paying with');
+  }
+
+  /**
+   * Get a text from the extension's catalog language file of the given
+   * language. The file is read directly, so the language does not have to be
+   * installed in the shop.
+   *
+   * @param string $language_code OpenCart language code, e.g. 'da-dk'
+   * @param string $key Key in the language file
+   * @param string $fallback Text if the file or the key is missing
+   * @return string
+   */
+  private static function getLegalNoteLanguageString($language_code, $key, $fallback) {
+    static $files = [];
 
     $language_code = preg_replace('/[^a-z0-9-]/', '', strtolower((string)$language_code));
 
-    if (!isset($texts[$language_code])) {
-      $texts[$language_code] = self::LEGAL_NOTE_DEFAULT_TEXT;
+    if (!isset($files[$language_code])) {
+      $files[$language_code] = [];
       // DIR_CATALOG is only defined in the admin.
       $catalog_dir = defined('DIR_CATALOG') ? DIR_CATALOG : DIR_APPLICATION;
       $file = $catalog_dir . 'language/' . $language_code . '/extension/payment/viabill.php';
@@ -253,13 +278,11 @@ class ViaBillHelper {
         // Language files fill a local $_ array.
         $_ = [];
         require $file;
-        if (!empty($_['text_legal_note_default'])) {
-          $texts[$language_code] = (string)$_['text_legal_note_default'];
-        }
+        $files[$language_code] = $_;
       }
     }
 
-    return $texts[$language_code];
+    return !empty($files[$language_code][$key]) ? (string)$files[$language_code][$key] : $fallback;
   }
 
   /**
@@ -286,6 +309,165 @@ class ViaBillHelper {
     $text = preg_replace('/(href|src)\s*=\s*(["\']?)\s*javascript:[^"\'>\s]*\2/i', '$1="#"', $text);
 
     return trim($text);
+  }
+
+  /**
+   * Default font style of the legal note: the same as the order summary.
+   */
+  const LEGAL_NOTE_DEFAULT_FONT_STYLE = 'normal';
+
+  /**
+   * Default text alignment of the legal note: right, next to the
+   * "Confirm Order" button.
+   */
+  const LEGAL_NOTE_DEFAULT_ALIGN = 'right';
+
+  /**
+   * Default margins of the legal note. They keep the spacing the legal note
+   * always had (0.5em above and below) and are positive, so safe for every
+   * theme.
+   */
+  const LEGAL_NOTE_DEFAULT_MARGINS = [
+    'top' => '0.5em',
+    'bottom' => '0.5em',
+    'left' => '0px',
+  ];
+
+  /**
+   * Get a valid CSS margin, or empty string. A plain number is taken as
+   * pixels, and negative values are allowed.
+   *
+   * @param mixed $value Value entered by the merchant
+   * @return string
+   */
+  public static function sanitizeLegalNoteMargin($value) {
+    $value = is_string($value) ? strtolower(trim($value)) : '';
+    $value = str_replace(',', '.', $value);
+
+    if (!preg_match('/^(-?)(\d+(?:\.\d+)?|\.\d+)\s*(px|em|rem|pt|%)?$/', $value, $matches)) {
+      return '';
+    }
+    if ((float)$matches[2] == 0) {
+      return '0px';
+    }
+
+    return $matches[1] . $matches[2] . (empty($matches[3]) ? 'px' : $matches[3]);
+  }
+
+  /**
+   * Font styles and text alignments of the legal note styling settings.
+   */
+  const LEGAL_NOTE_FONT_STYLES = ['normal', 'bold', 'italic', 'bold-italic'];
+  const LEGAL_NOTE_ALIGNMENTS = ['left', 'center', 'right'];
+
+  /**
+   * Get a valid CSS font size, or empty string. A plain number is taken as
+   * pixels.
+   *
+   * @param mixed $value Value entered by the merchant
+   * @return string
+   */
+  public static function sanitizeLegalNoteFontSize($value) {
+    $value = is_string($value) ? strtolower(trim($value)) : '';
+    $value = str_replace(',', '.', $value);
+
+    if (!preg_match('/^(\d+(?:\.\d+)?|\.\d+)\s*(px|em|rem|pt|%)?$/', $value, $matches)) {
+      return '';
+    }
+    if ((float)$matches[1] <= 0) {
+      return '';
+    }
+
+    return $matches[1] . (empty($matches[2]) ? 'px' : $matches[2]);
+  }
+
+  /**
+   * Get a valid CSS color (hex or a color name), or empty string.
+   *
+   * @param mixed $value Value entered by the merchant
+   * @return string
+   */
+  public static function sanitizeLegalNoteColor($value) {
+    $value = is_string($value) ? trim($value) : '';
+
+    return preg_match('/^(#[0-9a-fA-F]{3}|#[0-9a-fA-F]{6}|[a-zA-Z]{3,20})$/', $value) ? $value : '';
+  }
+
+  /**
+   * Get the extra CSS declarations (e.g. "padding: 8px; border: 1px solid
+   * #ccc") in a form that is safe to print inside a style attribute, once it
+   * is HTML-escaped. Only declarations are supported, so anything that could
+   * open a new rule or a tag is removed.
+   *
+   * @param mixed $css Value entered by the merchant (not HTML-escaped)
+   * @return string
+   */
+  public static function sanitizeLegalNoteExtraCss($css) {
+    if (!is_string($css) || trim($css) === '') {
+      return '';
+    }
+
+    $css = strip_tags($css);
+    $css = preg_replace('#/\*.*?\*/#s', '', $css);
+    $css = str_replace(['{', '}', '<', '>', '\\'], '', $css);
+    $css = preg_replace('/expression\s*\(|javascript\s*:|@import/i', '', $css);
+    $css = preg_replace('/\s+/', ' ', $css);
+
+    return trim($css, " ;\t\n\r");
+  }
+
+  /**
+   * Build the inline style of the legal note from the styling settings, e.g.
+   * "font-weight:600;color:#cc0000".
+   *
+   * @param array $settings Keys: font_size, font_style, color, align, extra_css
+   *                        (as stored by OpenCart, i.e. HTML-escaped)
+   * @return string CSS declarations, not HTML-escaped
+   */
+  public static function getLegalNoteStyle(array $settings) {
+    $declarations = [];
+
+    $font_size = self::sanitizeLegalNoteFontSize(isset($settings['font_size']) ? $settings['font_size'] : '');
+    if ($font_size !== '') {
+      $declarations[] = 'font-size:' . $font_size;
+    }
+
+    // A setting that was never saved gets the default font style.
+    $font_style = isset($settings['font_style']) ? (string)$settings['font_style'] : '';
+    if (!in_array($font_style, self::LEGAL_NOTE_FONT_STYLES, true)) {
+      $font_style = self::LEGAL_NOTE_DEFAULT_FONT_STYLE;
+    }
+    $declarations[] = 'font-weight:' . (strpos($font_style, 'bold') !== false ? '600' : 'normal');
+    $declarations[] = 'font-style:' . (strpos($font_style, 'italic') !== false ? 'italic' : 'normal');
+
+    $color = self::sanitizeLegalNoteColor(isset($settings['color']) ? $settings['color'] : '');
+    if ($color !== '') {
+      $declarations[] = 'color:' . $color;
+    }
+
+    // A setting that was never saved (null) gets the default alignment; a
+    // saved empty value means the alignment of the theme.
+    $align = isset($settings['align']) ? (string)$settings['align'] : self::LEGAL_NOTE_DEFAULT_ALIGN;
+    if (in_array($align, self::LEGAL_NOTE_ALIGNMENTS, true)) {
+      $declarations[] = 'text-align:' . $align;
+    }
+
+    // An empty or invalid margin means the default margin.
+    foreach (self::LEGAL_NOTE_DEFAULT_MARGINS as $side => $default) {
+      $margin = self::sanitizeLegalNoteMargin(isset($settings['margin_' . $side]) ? $settings['margin_' . $side] : '');
+      $declarations[] = 'margin-' . $side . ':' . ($margin !== '' ? $margin : $default);
+    }
+
+    // The extra CSS comes last, so it can override the controls above.
+    // Form input is stored HTML-escaped by OpenCart.
+    $extra_css = self::sanitizeLegalNoteExtraCss(
+      html_entity_decode(isset($settings['extra_css']) ? (string)$settings['extra_css'] : '', ENT_QUOTES, 'UTF-8')
+    );
+    if ($extra_css !== '') {
+      $declarations[] = $extra_css;
+    }
+
+    return implode(';', $declarations);
   }
 
 }

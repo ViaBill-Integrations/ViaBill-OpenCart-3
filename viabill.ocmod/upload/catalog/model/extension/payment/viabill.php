@@ -103,35 +103,60 @@ class ModelExtensionPaymentViabill extends Model {
 
     /**
      * Get the legal note (credit warning) to show at the checkout: the
-     * merchant's own text for the current language if set, otherwise the
-     * default text in the configured language. Empty if switched off.
+     * default text in the configured language.
      *
      * @return string Safe HTML
      */
     public function getLegalNote(): string {
         $this->loadViabillHelpers();
 
-        // Enabled unless the merchant has switched it off. A setting that was
-        // never saved is returned as null (or '').
-        $status = $this->config->get('payment_viabill_legal_note_status');
-        if ($status !== null && $status !== '' && !$status) {
-            return '';
-        }
+        return ViaBillHelper::sanitizeLegalNote(ViaBillHelper::getLegalNoteDefaultText($this->getLegalNoteLanguageCode()));
+    }
 
-        $texts = $this->config->get('payment_viabill_legal_note_text');
-        $language_id = (int)$this->config->get('config_language_id');
-        $text = is_array($texts) && isset($texts[$language_id]) ? trim((string)$texts[$language_id]) : '';
+    /**
+     * Get the "You are paying with" text shown before the ViaBill logo and
+     * the legal note, in the same language as the legal note.
+     *
+     * @return string Plain text
+     */
+    public function getLegalNotePayingWith(): string {
+        $this->loadViabillHelpers();
 
-        if ($text !== '') {
-            // Form input is stored HTML-escaped by OpenCart.
-            return ViaBillHelper::sanitizeLegalNote(html_entity_decode($text, ENT_QUOTES, 'UTF-8'));
-        }
+        return ViaBillHelper::getLegalNotePayingWithText($this->getLegalNoteLanguageCode());
+    }
 
+    /**
+     * Get the OpenCart code of the language of the legal note.
+     *
+     * @return string
+     */
+    private function getLegalNoteLanguageCode(): string {
         $language = (string)($this->config->get('payment_viabill_legal_note_language') ?: 'auto');
 
-        return ViaBillHelper::sanitizeLegalNote(ViaBillHelper::getLegalNoteDefaultText(
-            ViaBillHelper::getLegalNoteLanguageCode($language, $this->config->get('config_language'))
-        ));
+        return ViaBillHelper::getLegalNoteLanguageCode($language, $this->config->get('config_language'));
+    }
+
+    /**
+     * Get the inline style of the legal note, built from the styling
+     * settings of the extension.
+     *
+     * @return string CSS declarations, HTML-escaped for use in a style attribute
+     */
+    public function getLegalNoteStyle(): string {
+        $this->loadViabillHelpers();
+
+        $style = ViaBillHelper::getLegalNoteStyle([
+            'font_size'  => $this->config->get('payment_viabill_legal_note_font_size'),
+            'font_style' => $this->config->get('payment_viabill_legal_note_font_style'),
+            'color'      => $this->config->get('payment_viabill_legal_note_color'),
+            'align'      => $this->config->get('payment_viabill_legal_note_align'),
+            'extra_css'  => $this->config->get('payment_viabill_legal_note_extra_css'),
+            'margin_top'    => $this->config->get('payment_viabill_legal_note_margin_top'),
+            'margin_bottom' => $this->config->get('payment_viabill_legal_note_margin_bottom'),
+            'margin_left'   => $this->config->get('payment_viabill_legal_note_margin_left'),
+        ]);
+
+        return htmlspecialchars($style, ENT_QUOTES, 'UTF-8');
     }
 
     private function loadViabillHelpers() {

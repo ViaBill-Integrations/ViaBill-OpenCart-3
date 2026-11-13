@@ -117,3 +117,33 @@ $_['text_legal_note_language_auto'] = 'Automatisk';
 $_['text_legal_note_language_en'] = 'Engelsk';
 $_['text_legal_note_language_da'] = 'Dansk';
 $_['text_legal_note_language_es'] = 'Spansk';
+
+// Legal note styling
+$_['entry_legal_note_font_size'] = 'Skriftstørrelse';
+$_['help_legal_note_font_size'] = 'Skriftstørrelse for den juridiske meddelelse, f.eks. 14px, 0.9em eller 90%. Lad feltet være tomt for at bruge dit temas skriftstørrelse.';
+$_['entry_legal_note_font_style'] = 'Skriftstil';
+$_['text_legal_note_font_style_normal'] = 'Normal';
+$_['text_legal_note_font_style_bold'] = 'Fed';
+$_['text_legal_note_font_style_italic'] = 'Kursiv';
+$_['text_legal_note_font_style_bold_italic'] = 'Fed kursiv';
+$_['entry_legal_note_color'] = 'Tekstfarve';
+$_['help_legal_note_color'] = 'Farvekode for teksten i den juridiske meddelelse, f.eks. #cc0000. Lad feltet være tomt for at bruge dit temas tekstfarve.';
+$_['entry_legal_note_align'] = 'Tekstjustering';
+$_['text_legal_note_theme_default'] = 'Temaets standard';
+$_['text_legal_note_align_left'] = 'Venstre';
+$_['text_legal_note_align_center'] = 'Centreret';
+$_['text_legal_note_align_right'] = 'Højre';
+$_['entry_legal_note_extra_css'] = 'Ekstra CSS';
+$_['help_legal_note_extra_css'] = 'Valgfrie CSS-erklæringer, der anvendes på boksen med den juridiske meddelelse, adskilt med semikolon (ingen selektorer eller krøllede parenteser), f.eks. padding: 8px 12px; background-color: #fff8e1; border-left: 3px solid #f0b849; De anvendes efter indstillingerne ovenfor, så de også kan tilsidesætte dem.';
+$_['error_legal_note_font_size'] = 'Skriftstørrelsen for den juridiske meddelelse er ikke gyldig. Brug en værdi som 14px, 0.9em eller 90%.';
+$_['error_legal_note_color'] = 'Tekstfarven for den juridiske meddelelse er ikke gyldig. Brug en farvekode som #cc0000.';
+
+// Legal note margins and read-only text
+$_['help_legal_note_text_readonly'] = 'Den juridiske meddelelse, der vises ved kassen, på det sprog, der er valgt nedenfor.';
+$_['entry_legal_note_margin_top'] = 'Margen øverst';
+$_['help_legal_note_margin_top'] = 'Afstand over den juridiske meddelelse, f.eks. 4px eller 0.5em. En negativ værdi flytter den tættere på indholdet ovenover.';
+$_['entry_legal_note_margin_bottom'] = 'Margen nederst';
+$_['help_legal_note_margin_bottom'] = 'Afstand under den juridiske meddelelse, f.eks. 4px eller 0.5em.';
+$_['entry_legal_note_margin_left'] = 'Margen venstre';
+$_['help_legal_note_margin_left'] = 'Afstand til venstre for den juridiske meddelelse, f.eks. 4px. En negativ værdi flytter den til venstre.';
+$_['error_legal_note_margin'] = 'En margen for den juridiske meddelelse er ikke gyldig. Brug en værdi som 4px, -12px eller 0.5em.';

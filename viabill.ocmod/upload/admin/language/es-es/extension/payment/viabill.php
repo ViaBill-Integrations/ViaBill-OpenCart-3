@@ -117,3 +117,33 @@ $_['text_legal_note_language_auto'] = 'Automático';
 $_['text_legal_note_language_en'] = 'Inglés';
 $_['text_legal_note_language_da'] = 'Danés';
 $_['text_legal_note_language_es'] = 'Español';
+
+// Legal note styling
+$_['entry_legal_note_font_size'] = 'Tamaño de fuente';
+$_['help_legal_note_font_size'] = 'Tamaño de fuente del aviso legal, p. ej. 14px, 0.9em o 90%. Déjelo vacío para usar el tamaño de fuente de su tema.';
+$_['entry_legal_note_font_style'] = 'Estilo de fuente';
+$_['text_legal_note_font_style_normal'] = 'Normal';
+$_['text_legal_note_font_style_bold'] = 'Negrita';
+$_['text_legal_note_font_style_italic'] = 'Cursiva';
+$_['text_legal_note_font_style_bold_italic'] = 'Negrita cursiva';
+$_['entry_legal_note_color'] = 'Color del texto';
+$_['help_legal_note_color'] = 'Código de color del texto del aviso legal, p. ej. #cc0000. Déjelo vacío para usar el color de texto de su tema.';
+$_['entry_legal_note_align'] = 'Alineación del texto';
+$_['text_legal_note_theme_default'] = 'Predeterminado del tema';
+$_['text_legal_note_align_left'] = 'Izquierda';
+$_['text_legal_note_align_center'] = 'Centro';
+$_['text_legal_note_align_right'] = 'Derecha';
+$_['entry_legal_note_extra_css'] = 'CSS adicional';
+$_['help_legal_note_extra_css'] = 'Declaraciones CSS opcionales que se aplican al cuadro del aviso legal, separadas por punto y coma (sin selectores ni llaves), p. ej. padding: 8px 12px; background-color: #fff8e1; border-left: 3px solid #f0b849; Se aplican después de las opciones anteriores, por lo que también pueden sobrescribirlas.';
+$_['error_legal_note_font_size'] = 'El tamaño de fuente del aviso legal no es válido. Use un valor como 14px, 0.9em o 90%.';
+$_['error_legal_note_color'] = 'El color del texto del aviso legal no es válido. Use un código de color como #cc0000.';
+
+// Legal note margins and read-only text
+$_['help_legal_note_text_readonly'] = 'El aviso legal que se muestra en la página de pago, en el idioma seleccionado abajo.';
+$_['entry_legal_note_margin_top'] = 'Margen superior';
+$_['help_legal_note_margin_top'] = 'Espacio encima del aviso legal, p. ej. 4px o 0.5em. Un valor negativo lo acerca al contenido de arriba.';
+$_['entry_legal_note_margin_bottom'] = 'Margen inferior';
+$_['help_legal_note_margin_bottom'] = 'Espacio debajo del aviso legal, p. ej. 4px o 0.5em.';
+$_['entry_legal_note_margin_left'] = 'Margen izquierdo';
+$_['help_legal_note_margin_left'] = 'Espacio a la izquierda del aviso legal, p. ej. 4px. Un valor negativo lo mueve a la izquierda.';
+$_['error_legal_note_margin'] = 'Un margen del aviso legal no es válido. Use un valor como 4px, -12px o 0.5em.';

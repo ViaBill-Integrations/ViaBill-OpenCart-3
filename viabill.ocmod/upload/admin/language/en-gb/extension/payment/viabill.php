@@ -118,3 +118,33 @@ $_['text_legal_note_language_auto'] = 'Auto';
 $_['text_legal_note_language_en'] = 'English';
 $_['text_legal_note_language_da'] = 'Danish';
 $_['text_legal_note_language_es'] = 'Spanish';
+
+// Legal note styling
+$_['entry_legal_note_font_size'] = 'Font size';
+$_['help_legal_note_font_size'] = 'Font size of the legal note, e.g. 14px, 0.9em or 90%. Leave empty to use the font size of your theme.';
+$_['entry_legal_note_font_style'] = 'Font style';
+$_['text_legal_note_font_style_normal'] = 'Normal';
+$_['text_legal_note_font_style_bold'] = 'Bold';
+$_['text_legal_note_font_style_italic'] = 'Italic';
+$_['text_legal_note_font_style_bold_italic'] = 'Bold italic';
+$_['entry_legal_note_color'] = 'Text color';
+$_['help_legal_note_color'] = 'Color code of the legal note text, e.g. #cc0000. Leave empty to use the text color of your theme.';
+$_['entry_legal_note_align'] = 'Text alignment';
+$_['text_legal_note_theme_default'] = 'Theme default';
+$_['text_legal_note_align_left'] = 'Left';
+$_['text_legal_note_align_center'] = 'Center';
+$_['text_legal_note_align_right'] = 'Right';
+$_['entry_legal_note_extra_css'] = 'Extra CSS';
+$_['help_legal_note_extra_css'] = 'Optional CSS declarations applied to the legal note box, separated by semicolons (no selectors or braces), e.g. padding: 8px 12px; background-color: #fff8e1; border-left: 3px solid #f0b849; They are applied after the options above, so they can also override them.';
+$_['error_legal_note_font_size'] = 'The font size of the legal note is not valid. Use a value such as 14px, 0.9em or 90%.';
+$_['error_legal_note_color'] = 'The text color of the legal note is not valid. Use a color code such as #cc0000.';
+
+// Legal note margins and read-only text
+$_['help_legal_note_text_readonly'] = 'The legal note shown at checkout, in the language selected below.';
+$_['entry_legal_note_margin_top'] = 'Margin top';
+$_['help_legal_note_margin_top'] = 'Space above the legal note, e.g. 4px or 0.5em. A negative value moves it closer to the content above.';
+$_['entry_legal_note_margin_bottom'] = 'Margin bottom';
+$_['help_legal_note_margin_bottom'] = 'Space below the legal note, e.g. 4px or 0.5em.';
+$_['entry_legal_note_margin_left'] = 'Margin left';
+$_['help_legal_note_margin_left'] = 'Space to the left of the legal note, e.g. 4px. A negative value moves it to the left.';
+$_['error_legal_note_margin'] = 'A margin of the legal note is not valid. Use a value such as 4px, -12px or 0.5em.';

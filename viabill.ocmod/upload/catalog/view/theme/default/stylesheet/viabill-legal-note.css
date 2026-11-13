@@ -1,5 +1,35 @@
-/* Legal note (credit warning) next to the ViaBill payment method, see template/extension/payment/viabill.twig */
+/* Legal note (credit warning) at the order confirmation, see template/extension/payment/viabill.twig.
+   Its font style, alignment and margins are set inline from the extension settings. */
 .viabill-legal-note {
-    font-weight: 600;
-    margin: 0.5em 0;
+    margin: 0;
+}
+
+/* The paragraphs follow the styling set on the legal note box (extension settings) */
+.viabill-legal-note p {
+    display: inline;
+    margin: 0;
+    font-size: inherit;
+    font-weight: inherit;
+    font-style: inherit;
+    color: inherit;
+    text-align: inherit;
+    line-height: inherit;
+}
+
+/* "You are paying with [ViaBill]": the ViaBill logo in a small purple pill, sized with the text */
+.viabill-legal-note-logo {
+    display: inline-block;
+    margin: 0 0.3em;
+    padding: 0.2em 0.4em;
+    border-radius: 0.25em;
+    background-color: #5a00ff;
+    line-height: 0;
+    vertical-align: -0.15em;
+}
+
+.viabill-legal-note-logo img {
+    display: block;
+    width: auto;
+    height: 0.75em;
+    max-width: none;
 }

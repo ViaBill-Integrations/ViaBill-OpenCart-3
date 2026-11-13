@@ -282,33 +282,17 @@
                 <div class="card-body">
                   <div class="alert alert-info"><i class="fa fa-info-circle"></i> {{ text_legal_note_intro }}</div>
 
+                  {# Read only: the legal note in the language selected below. It has no name, so nothing is saved for it. #}
                   <div class="row mb-3">
-                    <label class="col-sm-2 col-form-label" for="input-legal-note-status">
-                      <i class="fa fa-power-off"></i> {{ entry_legal_note_status }}
-                    </label>
-                    <div class="col-sm-10">
-                      <select name="payment_viabill_legal_note_status" id="input-legal-note-status" class="form-select">
-                        <option value="1" {{ payment_viabill_legal_note_status ? 'selected' : '' }}>{{ text_enabled }}</option>
-                        <option value="0" {{ not payment_viabill_legal_note_status ? 'selected' : '' }}>{{ text_disabled }}</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div class="row mb-3">
-                    <label class="col-sm-2 col-form-label">
+                    <label class="col-sm-2 col-form-label" for="input-legal-note-text">
                       <i class="fa fa-file-text-o text-info"></i> {{ entry_legal_note_text }}
                     </label>
                     <div class="col-sm-10">
-                      {% for language in languages %}
-                        <div class="input-group mb-2">
-                          <span class="input-group-text"><img src="language/{{ language.code }}/{{ language.code }}.png" title="{{ language.name|e }}" alt="{{ language.name|e }}" /></span>
-                          <textarea name="payment_viabill_legal_note_text[{{ language.language_id }}]" rows="2" id="input-legal-note-text-{{ language.language_id }}"
-                                    class="form-control" placeholder="{{ text_legal_note_default_value|e }}">{{ payment_viabill_legal_note_text[language.language_id] }}</textarea>
-                        </div>
-                      {% endfor %}
+                      <textarea rows="2" id="input-legal-note-text" class="form-control" readonly
+                                data-texts="{{ legal_note_texts_json|e('html_attr') }}">{{ legal_note_texts[payment_viabill_legal_note_language] ?? legal_note_texts['auto'] }}</textarea>
                       <div class="form-text">
                         <i class="fa fa-info-circle text-info"></i>
-                        {{ help_legal_note_text }} {{ text_legal_note_default }} {{ text_legal_note_default_value|e }}
+                        {{ help_legal_note_text_readonly }}
                       </div>
                     </div>
                   </div>
@@ -330,8 +314,111 @@
                       </div>
                     </div>
                   </div>
+
+                  {# Styling of the legal note #}
+                  <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label" for="input-legal-note-font-size">
+                      <i class="fa fa-text-height text-info"></i> {{ entry_legal_note_font_size }}
+                    </label>
+                    <div class="col-sm-10">
+                      <input type="text" name="payment_viabill_legal_note_font_size" value="{{ payment_viabill_legal_note_font_size }}" id="input-legal-note-font-size"
+                             class="form-control" placeholder="{{ text_legal_note_theme_default }}" maxlength="12" style="max-width: 12em;" />
+                      <div class="form-text">
+                        <i class="fa fa-info-circle text-info"></i>
+                        {{ help_legal_note_font_size }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label" for="input-legal-note-font-style">
+                      <i class="fa fa-bold text-info"></i> {{ entry_legal_note_font_style }}
+                    </label>
+                    <div class="col-sm-10">
+                      <select name="payment_viabill_legal_note_font_style" id="input-legal-note-font-style" class="form-select">
+                        <option value="normal" {{ payment_viabill_legal_note_font_style == 'normal' ? 'selected' : '' }}>{{ text_legal_note_font_style_normal }}</option>
+                        <option value="bold" {{ payment_viabill_legal_note_font_style == 'bold' ? 'selected' : '' }}>{{ text_legal_note_font_style_bold }}</option>
+                        <option value="italic" {{ payment_viabill_legal_note_font_style == 'italic' ? 'selected' : '' }}>{{ text_legal_note_font_style_italic }}</option>
+                        <option value="bold-italic" {{ payment_viabill_legal_note_font_style == 'bold-italic' ? 'selected' : '' }}>{{ text_legal_note_font_style_bold_italic }}</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label" for="input-legal-note-color">
+                      <i class="fa fa-tint text-info"></i> {{ entry_legal_note_color }}
+                    </label>
+                    <div class="col-sm-10">
+                      <input type="text" name="payment_viabill_legal_note_color" value="{{ payment_viabill_legal_note_color }}" id="input-legal-note-color"
+                             class="form-control" placeholder="{{ text_legal_note_theme_default }}" maxlength="20" style="max-width: 12em;" />
+                      <div class="form-text">
+                        <i class="fa fa-info-circle text-info"></i>
+                        {{ help_legal_note_color }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label" for="input-legal-note-align">
+                      <i class="fa fa-align-left text-info"></i> {{ entry_legal_note_align }}
+                    </label>
+                    <div class="col-sm-10">
+                      <select name="payment_viabill_legal_note_align" id="input-legal-note-align" class="form-select">
+                        <option value="" {{ payment_viabill_legal_note_align == '' ? 'selected' : '' }}>{{ text_legal_note_theme_default }}</option>
+                        <option value="left" {{ payment_viabill_legal_note_align == 'left' ? 'selected' : '' }}>{{ text_legal_note_align_left }}</option>
+                        <option value="center" {{ payment_viabill_legal_note_align == 'center' ? 'selected' : '' }}>{{ text_legal_note_align_center }}</option>
+                        <option value="right" {{ payment_viabill_legal_note_align == 'right' ? 'selected' : '' }}>{{ text_legal_note_align_right }}</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {% for side in ['top', 'bottom', 'left'] %}
+                    <div class="row mb-3">
+                      <label class="col-sm-2 col-form-label" for="input-legal-note-margin-{{ side }}">
+                        <i class="fa fa-arrows-v text-info"></i> {{ attribute(_context, 'entry_legal_note_margin_' ~ side) }}
+                      </label>
+                      <div class="col-sm-10">
+                        <input type="text" name="payment_viabill_legal_note_margin_{{ side }}" value="{{ attribute(_context, 'payment_viabill_legal_note_margin_' ~ side) }}" id="input-legal-note-margin-{{ side }}"
+                               class="form-control" maxlength="12" style="max-width: 12em;" />
+                        <div class="form-text">
+                          <i class="fa fa-info-circle text-info"></i>
+                          {{ attribute(_context, 'help_legal_note_margin_' ~ side) }}
+                        </div>
+                      </div>
+                    </div>
+                  {% endfor %}
+
+                  <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label" for="input-legal-note-extra-css">
+                      <i class="fa fa-code text-info"></i> {{ entry_legal_note_extra_css }}
+                    </label>
+                    <div class="col-sm-10">
+                      <textarea name="payment_viabill_legal_note_extra_css" rows="2" id="input-legal-note-extra-css"
+                                class="form-control" style="font-family: monospace;" placeholder="padding: 8px 12px; background-color: #fff8e1; border-left: 3px solid #f0b849;">{{ payment_viabill_legal_note_extra_css }}</textarea>
+                      <div class="form-text">
+                        <i class="fa fa-info-circle text-info"></i>
+                        {{ help_legal_note_extra_css }}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
+              <script type="text/javascript">
+                // Show the legal note in the language selected in the "Language" field.
+                (function () {
+                  var text = document.getElementById('input-legal-note-text');
+                  var select = document.getElementById('input-legal-note-language');
+                  if (!text || !select) {
+                    return;
+                  }
+                  var texts = JSON.parse(text.getAttribute('data-texts') || '{}');
+                  select.addEventListener('change', function () {
+                    if (Object.prototype.hasOwnProperty.call(texts, select.value)) {
+                      text.value = texts[select.value];
+                    }
+                  });
+                })();
+              </script>
 
             </div>
 

@@ -23,3 +23,4 @@ $_['text_history_status'] = 'ViaBill: Payment status: %s';
 
 // Legal note (credit warning)
 $_['text_legal_note_default'] = 'Warning! Borrow responsibly - it costs money.';
+$_['text_legal_note_paying_with'] = 'You are paying with';

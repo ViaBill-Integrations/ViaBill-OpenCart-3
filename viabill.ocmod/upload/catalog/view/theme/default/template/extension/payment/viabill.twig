@@ -1,7 +1,12 @@
 {% if legal_note %}
-  {# legal_note is sanitized HTML, see the catalog model getLegalNote() #}
+  {# legal_note is sanitized HTML and legal_note_style is escaped CSS, see the
+     catalog model getLegalNote() and getLegalNoteStyle() #}
   <link href="{{ legal_note_css }}" rel="stylesheet" />
-  <div class="viabill-legal-note">{{ legal_note }}</div>
+  <div class="viabill-legal-note"{% if legal_note_style %} style="{{ legal_note_style }}"{% endif %}>
+    <span class="viabill-legal-note-paying-with">{{ legal_note_paying_with|e }}</span>
+    <span class="viabill-legal-note-logo"><img src="{{ legal_note_logo|e }}" alt="ViaBill" /></span>
+    <span class="viabill-legal-note-text">{{ legal_note }}</span>
+  </div>
 {% endif %}
 <div class="buttons">
   <div class="pull-right">
